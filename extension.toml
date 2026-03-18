@@ -7,4 +7,4 @@ description = "Toolang syntax highlighting for Zed"
 
 [grammars.toolang]
 repository = "https://github.com/openhat-ai/tree-sitter-toolang"
-commit = "d75976e9464a227fb2a7403d5ebeb3f80b433c3c"
+commit = "d75976e0968f0c88e666280367a4e5c8edcb37d2"

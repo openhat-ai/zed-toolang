@@ -1,0 +1,10 @@
+id = "toolang"
+name = "Toolang"
+version = "0.0.5"
+schema_version = 1
+authors = ["Bryan"]
+description = "Toolang syntax highlighting for Zed"
+
+[grammars.toolang]
+repository = "https://github.com/openhat-ai/tree-sitter-toolang"
+commit = "d75976e9464a227fb2a7403d5ebeb3f80b433c3c"

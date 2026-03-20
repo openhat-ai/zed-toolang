@@ -1,63 +1,73 @@
 # Toolang for Zed
 
-Zed extension for Toolang source files.
+Zed extension for Toolang `.too` files.
 
-## Ownership
+## Overview
 
-Tree-sitter grammar and query files are maintained in:
+This repository contains the files that Zed loads directly:
+
+- `extension.toml`
+- `languages/toolang/config.toml`
+- `languages/toolang/*.scm`
+- the Rust extension entrypoint under `src/`
+
+These files are checked into Git on purpose. Local use and published releases
+should work from this repository alone, without fetching grammar assets at
+install time.
+
+The Tree-sitter grammar source of truth lives in:
 
 - GitHub: `https://github.com/openhat-ai/tree-sitter-toolang`
 
-The files in `languages/toolang/*.scm` are synced copies for Zed consumption.
-Do not hand-edit them.
-This repository should not vendor the Tree-sitter grammar source.
-The grammar repository is also responsible for publishing the `tree-sitter-toolang`
-packages for npm, PyPI, and Cargo.
+That grammar repository is also where npm, PyPI, and Cargo grammar packages are
+published.
 
-## Files
+## Local Use
 
-- `extension.toml`: registers the extension and grammar
-- `languages/toolang/config.toml`: language mapping for `.too`
-- `languages/toolang/*.scm`: synced Tree-sitter query files used by Zed
-- `scripts/sync-tree-sitter-queries.sh`: syncs query files from the pinned grammar revision, or from a local checkout override
+You do not need to run sync scripts before loading this extension in Zed.
+Zed will use the checked-in files in this repository.
 
-## Local Workflow
-
-1. Sync query files into the extension:
+If you want a quick sanity check first:
 
 ```bash
-make sync
+cargo check
 ```
 
-The script reads the grammar repository URL and pinned commit from
-`extension.toml`, fetches that exact grammar commit, and copies the query files
-into `languages/toolang`.
+Then load this repository directory in Zed's local extension developer flow:
 
-If you are actively editing the grammar locally, point the script at a checkout
-instead:
-
-```bash
-./scripts/sync-tree-sitter-queries.sh /path/to/tree-sitter-toolang
+```text
+/path/to/zed-toolang
 ```
 
-2. When you want to move this extension to a released grammar version, pin by
-tag:
+Open any `.too` file to verify highlighting.
+
+## Maintainer Workflow
+
+Only run sync commands when you are updating the pinned grammar revision.
+
+To move this extension to a released grammar version:
 
 ```bash
 make pin-grammar-tag TAG=v0.0.5
 ```
 
-This resolves the public grammar tag to a fixed commit SHA, updates
-`extension.toml`, and syncs the query files. The manifest still stores the
-resolved commit for deterministic builds.
+This resolves the grammar tag to a fixed commit SHA, updates
+`extension.toml`, and refreshes the checked-in query files.
 
-3. Run the local verification command before committing:
+To re-sync the currently pinned grammar revision:
+
+```bash
+make sync
+```
+
+Before committing maintainer changes:
 
 ```bash
 make check
 ```
 
-4. If you changed the grammar itself, validate it in the grammar repository:
+If you are working on the grammar itself, validate it in the grammar
+repository:
 
 ```bash
 git clone https://github.com/openhat-ai/tree-sitter-toolang.git
@@ -66,23 +76,12 @@ npm install
 npm run check
 ```
 
-5. Open Zed extensions developer flow and load this repository directory:
-
-```text
-/path/to/zed-toolang
-```
-
-6. Open any `.too` file.
-
 ## Publishing To Zed
 
-Before opening a publish PR, make sure this repository has a root `LICENSE`
-file using a Zed-accepted license such as MIT or Apache-2.0.
-
-To publish the extension:
+For a Zed extension release:
 
 1. Bump the version in both `extension.toml` and `Cargo.toml`.
-2. Push the tagged or release-ready commit to `openhat-ai/zed-toolang`.
+2. Push the release-ready commit to `openhat-ai/zed-toolang`.
 3. Fork `https://github.com/zed-industries/extensions`.
 4. Add this repository as a Git submodule under `extensions/toolang` using the
    HTTPS repository URL.

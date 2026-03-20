@@ -1,5 +1,5 @@
 ; Source of truth for Toolang Tree-sitter injection queries.
-; Sync this file into editor integrations instead of editing copies by hand.
+; Synced copy for the Zed extension. Edit the grammar repository instead.
 
 ((declaration
   header: (declaration_header

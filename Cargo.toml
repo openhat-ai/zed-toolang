@@ -2,6 +2,8 @@
 name = "zed-toolang"
 version = "0.0.5"
 edition = "2021"
+license = "MIT"
+repository = "https://github.com/openhat-ai/zed-toolang"
 publish = false
 
 [lib]

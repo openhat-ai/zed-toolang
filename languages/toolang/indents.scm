@@ -1,5 +1,5 @@
 ; Source of truth for Toolang Tree-sitter indentation queries.
-; Sync this file into editor integrations instead of editing copies by hand.
+; Synced copy for the Zed extension. Edit the grammar repository instead.
 
 (declaration_header) @indent
 (thunk_header) @indent

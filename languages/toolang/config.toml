@@ -1,6 +1,6 @@
 name = "Toolang"
 grammar = "toolang"
-path_suffixes = ["t"]
+path_suffixes = ["too"]
 line_comments = ["# "]
 tab_size = 4
 hard_tabs = false

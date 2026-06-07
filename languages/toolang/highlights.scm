@@ -2,6 +2,8 @@
 ; Synced copy for the Zed extension. Edit the grammar repository instead.
 
 (comment_line) @comment
+(program_doc_comment) @comment.documentation
+(doc_comment) @comment.documentation
 (inline_comment) @comment
 (frontmatter_comment) @comment
 
@@ -14,12 +16,25 @@
 (context_keyword) @keyword
 (instruct_keyword) @keyword
 (thunk_keyword) @keyword
+(flow_keyword) @keyword
+(flow_do_keyword) @keyword
+(flow_ask_keyword) @keyword
+(flow_unfold_keyword) @keyword
+(flow_keep_keyword) @keyword
+(flow_drop_keyword) @keyword
+(flow_rank_keyword) @keyword
+(flow_each_keyword) @keyword
+(flow_fold_keyword) @keyword
+(flow_repeat_keyword) @keyword
+(flow_until_keyword) @keyword
+(flow_to_keyword) @keyword
+(flow_par_keyword) @keyword
 
 (cap_kind) @type
 (directive_key) @property
 (context_block_kind) @keyword
 (instruct_block_kind) @keyword
-(message_block_kind) @keyword
+(roled_message_kind) @keyword
 (block_language) @property
 
 (assign_operator) @operator
@@ -51,6 +66,10 @@
 
 (thunk
   name: (thunk_name
+    (value_name) @function))
+
+(flow
+  name: (flow_name
     (value_name) @function))
 
 (prompt

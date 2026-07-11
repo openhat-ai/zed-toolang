@@ -1,8 +1,8 @@
 ; Source of truth for Toolang Tree-sitter outline queries.
 ; Synced copy for the Zed extension. Edit the grammar repository instead.
 
-(thunk
-  name: (thunk_name
+(agic
+  name: (agic_name
     (snake_name) @name)) @item
 
 (flow

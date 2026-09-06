@@ -2,6 +2,10 @@
 ; Synced copy for the Zed extension. Edit the grammar repository instead.
 
 (struct) @indent
+(psyche) @indent
+(skill) @indent
+(service) @indent
+(prompt) @indent
 (context) @indent
 (instruct) @indent
 (agic) @indent

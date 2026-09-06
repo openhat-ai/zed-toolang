@@ -48,7 +48,7 @@ Only run sync commands when you are updating the pinned grammar revision.
 To move this extension to a released grammar version:
 
 ```bash
-make pin-grammar-tag TAG=v0.2.0
+make pin-grammar-tag TAG=v0.3.0
 ```
 
 This resolves the grammar tag to a fixed commit SHA, updates

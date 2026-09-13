@@ -2,10 +2,10 @@
 ; Synced copy for the Zed extension. Edit the grammar repository instead.
 
 (plain_comment) @comment
-(shebang_comment) @comment
-(module_doc_comment) @comment.doc
+(shebang_comment) @keyword
+(module_doc_comment) @title
 (item_doc_comment) @comment.doc
-(param_doc_tag "@param" @keyword name: (param_name) @variable.parameter)
+(param_doc_tag "@param" @attribute name: (param_name) @variable.parameter)
 
 (with_keyword) @keyword
 (struct_keyword) @keyword

@@ -94,7 +94,16 @@ rewrite_query_for_zed() {
       next
     }
     {
-      # Zed themes name the documentation style comment.doc.
+      # Use distinct theme styles for documentation and its metadata.
+      if ($0 == "(shebang_comment) @comment") {
+        sub(/@comment$/, "@keyword")
+      }
+      if ($0 == "(module_doc_comment) @comment.documentation") {
+        sub(/@comment[.]documentation$/, "@title")
+      }
+      if ($0 ~ /^\(param_doc_tag /) {
+        sub(/@keyword/, "@attribute")
+      }
       sub(/@comment[.]documentation$/, "@comment.doc")
       print
     }

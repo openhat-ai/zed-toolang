@@ -1,10 +1,11 @@
 ; Source of truth for Toolang Tree-sitter highlight captures.
 ; Synced copy for the Zed extension. Edit the grammar repository instead.
 
-(comment_line) @comment
-(parent_doc_line) @comment.documentation
-(doc_line) @comment.documentation
-(inline_comment) @comment
+(plain_comment) @comment
+(shebang_comment) @comment
+(module_doc_comment) @comment.doc
+(item_doc_comment) @comment.doc
+(param_doc_tag "@param" @keyword name: (param_name) @variable.parameter)
 
 (with_keyword) @keyword
 (struct_keyword) @keyword

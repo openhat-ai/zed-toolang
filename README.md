@@ -22,6 +22,10 @@ The Tree-sitter grammar source of truth lives in:
 That grammar repository is also where npm, PyPI, and Cargo grammar packages are
 published.
 
+This extension pins the Toolang v0.3.2 grammar revision, adding `#@` module
+documentation and `## @param NAME DESCRIPTION` highlighting while retaining
+`##!` compatibility.
+
 ## Local Use
 
 You do not need to run sync scripts before loading this extension in Zed.
@@ -48,11 +52,14 @@ Only run sync commands when you are updating the pinned grammar revision.
 To move this extension to a released grammar version:
 
 ```bash
-make pin-grammar-tag TAG=v0.3.1
+make pin-grammar-tag TAG=v0.3.2
 ```
 
 This resolves the grammar tag to a fixed commit SHA, updates
 `extension.toml`, and refreshes the checked-in query files.
+The sync script maps upstream `@comment.documentation` captures to Zed's
+`@comment.doc` style. Keep grammar patterns upstream and editor-specific capture
+adaptation in the sync script; do not edit the synced copies directly.
 
 To re-sync the currently pinned grammar revision:
 
@@ -60,11 +67,17 @@ To re-sync the currently pinned grammar revision:
 make sync
 ```
 
-Before committing maintainer changes:
+Before committing maintainer changes, install the grammar test CLI and run the
+checks:
 
 ```bash
+npm install --global tree-sitter-cli@0.24.7
 make check
 ```
+
+Checks require Rust, Node.js, Git, and a C compiler. They fetch the pinned grammar,
+then verify query synchronization and rendered highlighting for documentation,
+parameters, and literal text with LF, CRLF, and EOF variants.
 
 If you are working on the grammar itself, validate it in the grammar
 repository:

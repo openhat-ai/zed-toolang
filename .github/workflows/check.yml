@@ -17,5 +17,13 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install Tree-sitter CLI
+        run: npm install --global tree-sitter-cli@0.24.7
+
       - name: Run checks
         run: make check

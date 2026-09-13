@@ -22,6 +22,11 @@ The Tree-sitter grammar source of truth lives in:
 That grammar repository is also where npm, PyPI, and Cargo grammar packages are
 published.
 
+This extension pins the merged Toolang 0.3.2 grammar revision, adding `#@` module
+documentation and `## @param NAME DESCRIPTION` highlighting while retaining
+`##!` compatibility. Zed loads the grammar from the pinned Git commit, so this
+upgrade does not require the grammar packages to be published first.
+
 ## Local Use
 
 You do not need to run sync scripts before loading this extension in Zed.

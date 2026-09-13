@@ -43,7 +43,6 @@ try {
       "variable.parameter": "#445566",
       string: "#556677",
       title: "#667788",
-      attribute: "#778899",
     },
   }));
 
@@ -53,7 +52,7 @@ try {
       treeSitter("parse", "--quiet", source);
       const html = treeSitter("highlight", "--html", source);
       for (const expected of [
-        "<span style='color: #334455'>#!/usr/bin/env too</span>",
+        "<span style='color: #112233'>#!/usr/bin/env too</span>",
         "<span style='color: #112233'># Plain comment.</span>",
         "<span style='color: #112233'># Inline comment.</span>",
         "<span style='color: #112233'>#! Later shebang.</span>",
@@ -64,8 +63,8 @@ try {
         "<span style='color: #667788'>#@</span>",
         "<span style='color: #667788'>##!</span>",
         "<span style='color: #223344'>##</span>",
-        "<span style='color: #223344'>## <span style='color: #778899'>@param</span> <span style='color: #445566'>_</span> <span style='color: #112233'>Source material.</span></span>",
-        "<span style='color: #223344'>## <span style='color: #778899'>@param</span> <span style='color: #445566'>style</span> <span style='color: #112233'>Preferred summary style.</span></span>",
+        "<span style='color: #223344'>## <span style='color: #334455'>@param</span> <span style='color: #445566'>_</span> <span style='color: #112233'>Source material.</span></span>",
+        "<span style='color: #223344'>## <span style='color: #334455'>@param</span> <span style='color: #445566'>style</span> <span style='color: #112233'>Preferred summary style.</span></span>",
         "<span style='color: #556677'>    #@ Literal module marker.</span>",
         "<span style='color: #556677'>    ## @param _ Literal parameter tag.</span>",
         "<span style='color: #556677'>    ##! Literal legacy marker.</span>",

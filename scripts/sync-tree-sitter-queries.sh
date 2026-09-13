@@ -94,10 +94,7 @@ rewrite_query_for_zed() {
       next
     }
     {
-      # Use distinct theme styles for documentation and its metadata.
-      if ($0 == "(shebang_comment) @comment") {
-        sub(/@comment$/, "@keyword")
-      }
+      # Accent documentation prefixes while preserving the original palette.
       if ($0 == "(module_doc_comment) @comment.documentation") {
         sub(/@comment[.]documentation$/, "@title")
       }
@@ -107,9 +104,6 @@ rewrite_query_for_zed() {
         # Keep prose in comment style; only prefixes retain the parent color.
         print "(comment_text) @comment.doc"
         next
-      }
-      if ($0 ~ /^\(param_doc_tag /) {
-        sub(/@keyword/, "@attribute")
       }
       sub(/@comment[.]documentation$/, "@comment.doc")
       print

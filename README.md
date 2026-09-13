@@ -30,13 +30,12 @@ With Zed's comment continuation enabled, Enter preserves `# `, `#@ `, `## `,
 and legacy `##! ` prefixes. A shebang never adds a comment prefix on the next
 line. Toggle Comments still uses `# ` for ordinary code.
 
-Comment colors follow the active theme. Plain comments use `comment`, and all
-documentation prose uses `comment.doc`. Module doc prefixes (`#@` and `##!`) use
-`title`, while item doc prefixes (`##`) use `text.literal`. Only the prefixes and
-parameter metadata receive accent colors, keeping prose visually consistent
-with comments even when the theme gives `comment` and `comment.doc` the same color.
-Shebangs use `keyword`, parameter tags use `attribute`, and parameter names use
-`variable.parameter`.
+Only documentation prefixes receive new accent colors: module doc prefixes
+(`#@` and `##!`) use `title`, while item doc prefixes (`##`) use `text.literal`.
+The original theme styles are preserved elsewhere: `comment` for plain comments
+and shebangs, `comment.doc` for documentation prose, `keyword` for `@param`, and
+`variable.parameter` for parameter names. Prefixes remain distinct even when
+the theme gives `comment` and `comment.doc` the same color.
 
 ## Local Use
 
@@ -69,10 +68,10 @@ make pin-grammar-tag TAG=v0.3.2
 
 This resolves the grammar tag to a fixed commit SHA, updates
 `extension.toml`, and refreshes the checked-in query files.
-The sync script adapts upstream captures to Zed's comment, title, text, keyword,
-and attribute styles, including a comment-style override for documentation
-prose. Keep editor-specific capture adaptation in the sync script; do not edit
-the synced copies directly.
+The sync script adapts upstream documentation captures to Zed's `comment.doc`
+style, with title and text accents limited to documentation prefixes. Keep
+editor-specific capture adaptation in the sync script; do not edit the synced
+copies directly.
 `languages/toolang/overrides.scm` is maintained locally for Zed-specific editing
 behavior, including the shebang continuation exception.
 

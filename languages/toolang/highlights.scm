@@ -5,6 +5,7 @@
 (shebang_comment) @keyword
 (module_doc_comment) @title
 (item_doc_comment) @text.literal
+(comment_text) @comment.doc
 (param_doc_tag "@param" @attribute name: (param_name) @variable.parameter)
 
 (with_keyword) @keyword

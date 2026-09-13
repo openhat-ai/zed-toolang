@@ -1,6 +1,9 @@
 #!/usr/bin/env too
 #@ Module docs.
 ##! Legacy module docs.
+#@
+##!
+##
 
 # Plain comment.
 ## Item docs.

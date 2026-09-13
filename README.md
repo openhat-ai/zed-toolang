@@ -30,11 +30,13 @@ With Zed's comment continuation enabled, Enter preserves `# `, `#@ `, `## `,
 and legacy `##! ` prefixes. A shebang never adds a comment prefix on the next
 line. Toggle Comments still uses `# ` for ordinary code.
 
-Comment colors follow the active theme: plain comments use `comment`, shebangs
-use `keyword`, module docs use `title`, and item docs use `text.literal`. Parameter
-tags use `attribute`, with names highlighted separately as `variable.parameter`.
-Item docs use a separate text style because some themes give `comment` and
-`comment.doc` the same color.
+Comment colors follow the active theme. Plain comments use `comment`, and all
+documentation prose uses `comment.doc`. Module doc prefixes (`#@` and `##!`) use
+`title`, while item doc prefixes (`##`) use `text.literal`. Only the prefixes and
+parameter metadata receive accent colors, keeping prose visually consistent
+with comments even when the theme gives `comment` and `comment.doc` the same color.
+Shebangs use `keyword`, parameter tags use `attribute`, and parameter names use
+`variable.parameter`.
 
 ## Local Use
 
@@ -68,8 +70,9 @@ make pin-grammar-tag TAG=v0.3.2
 This resolves the grammar tag to a fixed commit SHA, updates
 `extension.toml`, and refreshes the checked-in query files.
 The sync script adapts upstream captures to Zed's comment, title, text, keyword,
-and attribute styles. Keep grammar patterns upstream and editor-specific capture
-adaptation in the sync script; do not edit the synced copies directly.
+and attribute styles, including a comment-style override for documentation
+prose. Keep editor-specific capture adaptation in the sync script; do not edit
+the synced copies directly.
 `languages/toolang/overrides.scm` is maintained locally for Zed-specific editing
 behavior, including the shebang continuation exception.
 

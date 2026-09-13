@@ -1,0 +1,24 @@
+#!/usr/bin/env too
+#@ Module docs.
+##! Legacy module docs.
+
+# Plain comment.
+## Item docs.
+## @param _ Source material.
+## @param style Preferred summary style.
+agic summarize(_: Text, style?: Text): # Inline comment.
+  ##! Indented legacy docs.
+  user:
+    #@ Literal module marker.
+    ## @param _ Literal parameter tag.
+    ##! Literal legacy marker.
+
+#! Later shebang.
+## Default workflow.
+## @param _ Workflow input.
+flow(_: Text):
+  run summarize
+
+## Named workflow.
+flow review:
+  run summarize

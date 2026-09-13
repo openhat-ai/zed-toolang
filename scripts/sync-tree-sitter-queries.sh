@@ -83,7 +83,7 @@ resolve_source_dir() {
   echo "$checkout_dir/queries"
 }
 
-rewrite_synced_copy_notice() {
+rewrite_query_for_zed() {
   local file="$1"
   local temp_file
 
@@ -93,7 +93,11 @@ rewrite_synced_copy_notice() {
       print "; Synced copy for the Zed extension. Edit the grammar repository instead."
       next
     }
-    { print }
+    {
+      # Zed themes name the documentation style comment.doc.
+      sub(/@comment[.]documentation$/, "@comment.doc")
+      print
+    }
   ' "$file" > "$temp_file"
   mv "$temp_file" "$file"
 }
@@ -108,7 +112,7 @@ for file in "${FILES[@]}"; do
     exit 1
   fi
   cp "$SOURCE_DIR/$file" "$TARGET_DIR/$file"
-  rewrite_synced_copy_notice "$TARGET_DIR/$file"
+  rewrite_query_for_zed "$TARGET_DIR/$file"
 done
 
 echo "Synced ${#FILES[@]} Tree-sitter query files from $SOURCE_DIR into $TARGET_DIR"

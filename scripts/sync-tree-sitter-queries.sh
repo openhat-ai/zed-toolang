@@ -94,7 +94,7 @@ rewrite_query_for_zed() {
       next
     }
     {
-      # Accent documentation prefixes while preserving the original palette.
+      # Accent documentation prefixes; keep their contents in comment style.
       if ($0 == "(module_doc_comment) @comment.documentation") {
         sub(/@comment[.]documentation$/, "@title")
       }
@@ -104,6 +104,9 @@ rewrite_query_for_zed() {
         # Keep prose in comment style; only prefixes retain the parent color.
         print "(comment_text) @comment.doc"
         next
+      }
+      if ($0 ~ /^\(param_doc_tag /) {
+        gsub(/@keyword|@variable[.]parameter/, "@comment.doc")
       }
       sub(/@comment[.]documentation$/, "@comment.doc")
       print

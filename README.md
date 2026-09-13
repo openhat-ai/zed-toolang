@@ -32,10 +32,11 @@ line. Toggle Comments still uses `# ` for ordinary code.
 
 Only documentation prefixes receive new accent colors: module doc prefixes
 (`#@` and `##!`) use `title`, while item doc prefixes (`##`) use `text.literal`.
-The original theme styles are preserved elsewhere: `comment` for plain comments
-and shebangs, `comment.doc` for documentation prose, `keyword` for `@param`, and
-`variable.parameter` for parameter names. Prefixes remain distinct even when
-the theme gives `comment` and `comment.doc` the same color.
+Documentation prose, `@param`, and parameter names all use `comment.doc` so a
+parameter annotation has one consistent comment color after its prefix. Plain
+comments and shebangs retain `comment`, and code keeps its original styles.
+Prefixes remain distinct even when the theme gives `comment` and `comment.doc`
+the same color.
 
 ## Local Use
 
@@ -68,8 +69,8 @@ make pin-grammar-tag TAG=v0.3.2
 
 This resolves the grammar tag to a fixed commit SHA, updates
 `extension.toml`, and refreshes the checked-in query files.
-The sync script adapts upstream documentation captures to Zed's `comment.doc`
-style, with title and text accents limited to documentation prefixes. Keep
+The sync script adapts upstream documentation and parameter annotation captures
+to Zed's `comment.doc` style, with title and text accents limited to prefixes. Keep
 editor-specific capture adaptation in the sync script; do not edit the synced
 copies directly.
 `languages/toolang/overrides.scm` is maintained locally for Zed-specific editing

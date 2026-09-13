@@ -1,7 +1,7 @@
 name = "Toolang"
 grammar = "toolang"
 path_suffixes = ["too"]
-line_comments = ["# "]
+line_comments = ["# ", "#@ ", "## ", "##! "]
 tab_size = 4
 hard_tabs = false
 brackets = [
@@ -9,3 +9,6 @@ brackets = [
   { start = "[", end = "]", close = true, newline = false },
   { start = "(", end = ")", close = true, newline = false }
 ]
+
+[overrides.shebang]
+line_comments = []

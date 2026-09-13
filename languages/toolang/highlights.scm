@@ -3,9 +3,10 @@
 
 (plain_comment) @comment
 (shebang_comment) @comment
-(module_doc_comment) @comment.doc
-(item_doc_comment) @comment.doc
-(param_doc_tag "@param" @keyword name: (param_name) @variable.parameter)
+(module_doc_comment) @title
+(item_doc_comment) @text.literal
+(comment_text) @comment.doc
+(param_doc_tag "@param" @comment.doc name: (param_name) @comment.doc)
 
 (with_keyword) @keyword
 (struct_keyword) @keyword

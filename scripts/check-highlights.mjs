@@ -28,7 +28,7 @@ try {
   run("git", ["init", "--quiet", checkout]);
   run("git", ["fetch", "--quiet", "--depth=1", repository, commit], checkout);
   run("git", ["checkout", "--quiet", "FETCH_HEAD"], checkout);
-  const queries = ["highlights", "indents", "injections", "outline"];
+  const queries = ["highlights", "indents", "injections", "outline", "overrides"];
   for (const name of queries) {
     copyFileSync(join(root, "languages/toolang", `${name}.scm`), join(checkout, "queries", `${name}.scm`));
   }
@@ -36,10 +36,13 @@ try {
     "parser-directories": [temporary],
     theme: {
       comment: "#112233",
-      "comment.doc": "#223344",
+      // Some themes give plain comments and documentation the same color.
+      "comment.doc": "#112233",
+      "text.literal": "#223344",
       keyword: "#334455",
       "variable.parameter": "#445566",
       string: "#556677",
+      title: "#667788",
     },
   }));
 
@@ -53,15 +56,19 @@ try {
         "<span style='color: #112233'># Plain comment.</span>",
         "<span style='color: #112233'># Inline comment.</span>",
         "<span style='color: #112233'>#! Later shebang.</span>",
-        "<span style='color: #223344'>#@ Module docs.</span>",
-        "<span style='color: #223344'>##! Legacy module docs.</span>",
-        "<span style='color: #223344'>## Item docs.</span>",
-        "<span style='color: #223344'>##! Indented legacy docs.</span>",
-        "<span style='color: #223344'>## <span style='color: #334455'>@param</span> <span style='color: #445566'>_</span> Source material.</span>",
-        "<span style='color: #223344'>## <span style='color: #334455'>@param</span> <span style='color: #445566'>style</span> Preferred summary style.</span>",
+        "<span style='color: #667788'>#@ <span style='color: #112233'>Module docs.</span></span>",
+        "<span style='color: #667788'>##! <span style='color: #112233'>Legacy module docs.</span></span>",
+        "<span style='color: #223344'>## <span style='color: #112233'>Item docs.</span></span>",
+        "<span style='color: #667788'>##! <span style='color: #112233'>Indented legacy docs.</span></span>",
+        "<span style='color: #667788'>#@</span>",
+        "<span style='color: #667788'>##!</span>",
+        "<span style='color: #223344'>##</span>",
+        "<span style='color: #223344'>## <span style='color: #112233'>@param</span> <span style='color: #112233'>_</span> <span style='color: #112233'>Source material.</span></span>",
+        "<span style='color: #223344'>## <span style='color: #112233'>@param</span> <span style='color: #112233'>style</span> <span style='color: #112233'>Preferred summary style.</span></span>",
         "<span style='color: #556677'>    #@ Literal module marker.</span>",
         "<span style='color: #556677'>    ## @param _ Literal parameter tag.</span>",
         "<span style='color: #556677'>    ##! Literal legacy marker.</span>",
+        "<span style='color: #556677'>    #!/usr/bin/env too</span>",
       ]) {
         assert.ok(html.includes(expected), `Missing Zed highlight: ${expected}`);
       }
@@ -71,9 +78,23 @@ try {
       const outline = treeSitter("query", "--captures", join(checkout, "queries/outline.scm"), source);
       const names = [...outline.matchAll(/capture: \d+ - name,.*text: `([^`]+)`/g)].map((match) => match[1]);
       assert.deepEqual(names, ["summarize", "review"]);
+      const overrides = treeSitter("query", "--captures", join(checkout, "queries/overrides.scm"), source);
+      assert.equal([...overrides.matchAll(/capture: \d+ - shebang[.]inclusive,/g)].length, 1);
+      assert.match(overrides, /shebang[.]inclusive, start: \(0, 0\), end: \(1, 0\)/);
     }
   }
-  console.log("Zed query and highlight checks passed for LF, CRLF, and EOF variants.");
+  for (const [text, count] of [
+    ["#!/usr/bin/env too", 1],
+    ["#!", 1],
+    [" #!/usr/bin/env too", 0],
+    ["# Plain comment.\n#!/usr/bin/env too", 0],
+  ]) {
+    writeFileSync(source, text);
+    treeSitter("parse", "--quiet", source);
+    const overrides = treeSitter("query", "--captures", join(checkout, "queries/overrides.scm"), source);
+    assert.equal([...overrides.matchAll(/capture: \d+ - shebang[.]inclusive,/g)].length, count);
+  }
+  console.log("Zed query, highlight, and shebang scope checks passed for LF, CRLF, and EOF variants.");
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }

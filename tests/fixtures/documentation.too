@@ -1,6 +1,9 @@
 #!/usr/bin/env too
 #@ Module docs.
 ##! Legacy module docs.
+#@
+##!
+##
 
 # Plain comment.
 ## Item docs.
@@ -12,6 +15,7 @@ agic summarize(_: Text, style?: Text): # Inline comment.
     #@ Literal module marker.
     ## @param _ Literal parameter tag.
     ##! Literal legacy marker.
+    #!/usr/bin/env too
 
 #! Later shebang.
 ## Default workflow.

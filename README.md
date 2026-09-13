@@ -26,6 +26,18 @@ This extension pins the Toolang v0.3.2 grammar revision, adding `#@` module
 documentation and `## @param NAME DESCRIPTION` highlighting while retaining
 `##!` compatibility.
 
+With Zed's comment continuation enabled, Enter preserves `# `, `#@ `, `## `,
+and legacy `##! ` prefixes. A shebang never adds a comment prefix on the next
+line. Toggle Comments still uses `# ` for ordinary code.
+
+Only documentation prefixes receive new accent colors: module doc prefixes
+(`#@` and `##!`) use `title`, while item doc prefixes (`##`) use `text.literal`.
+Documentation prose, `@param`, and parameter names all use `comment.doc` so a
+parameter annotation has one consistent comment color after its prefix. Plain
+comments and shebangs retain `comment`, and code keeps its original styles.
+Prefixes remain distinct even when the theme gives `comment` and `comment.doc`
+the same color.
+
 ## Local Use
 
 You do not need to run sync scripts before loading this extension in Zed.
@@ -57,9 +69,12 @@ make pin-grammar-tag TAG=v0.3.2
 
 This resolves the grammar tag to a fixed commit SHA, updates
 `extension.toml`, and refreshes the checked-in query files.
-The sync script maps upstream `@comment.documentation` captures to Zed's
-`@comment.doc` style. Keep grammar patterns upstream and editor-specific capture
-adaptation in the sync script; do not edit the synced copies directly.
+The sync script adapts upstream documentation and parameter annotation captures
+to Zed's `comment.doc` style, with title and text accents limited to prefixes. Keep
+editor-specific capture adaptation in the sync script; do not edit the synced
+copies directly.
+`languages/toolang/overrides.scm` is maintained locally for Zed-specific editing
+behavior, including the shebang continuation exception.
 
 To re-sync the currently pinned grammar revision:
 

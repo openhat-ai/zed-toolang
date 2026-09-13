@@ -101,6 +101,9 @@ rewrite_query_for_zed() {
       if ($0 == "(module_doc_comment) @comment.documentation") {
         sub(/@comment[.]documentation$/, "@title")
       }
+      if ($0 == "(item_doc_comment) @comment.documentation") {
+        sub(/@comment[.]documentation$/, "@text.literal")
+      }
       if ($0 ~ /^\(param_doc_tag /) {
         sub(/@keyword/, "@attribute")
       }

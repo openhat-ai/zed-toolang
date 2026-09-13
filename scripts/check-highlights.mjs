@@ -36,7 +36,9 @@ try {
     "parser-directories": [temporary],
     theme: {
       comment: "#112233",
-      "comment.doc": "#223344",
+      // Some themes give plain comments and documentation the same color.
+      "comment.doc": "#112233",
+      "text.literal": "#223344",
       keyword: "#334455",
       "variable.parameter": "#445566",
       string: "#556677",

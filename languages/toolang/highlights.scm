@@ -35,6 +35,8 @@
 (flow_rank_keyword) @keyword
 (flow_repeat_keyword) @keyword
 (flow_until_keyword) @keyword
+(flow_from_keyword) @keyword
+(flow_windowing_keyword) @keyword
 (flow_using_keyword) @keyword
 (flow_if_keyword) @keyword
 (flow_by_keyword) @keyword
@@ -74,6 +76,12 @@
   (text_line) @constant)
 (directive_value) @constant
 (recall_value) @constant
+(route_value) @constant
+(text_ref) @constant
+(integer_literal) @number
+(default_keyword) @constant.builtin
+(none_keyword) @constant.builtin
+(all_keyword) @constant.builtin
 
 (property_value) @string
 (text_line) @string

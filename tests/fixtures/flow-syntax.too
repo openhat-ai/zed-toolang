@@ -1,0 +1,35 @@
+#@ Current runnable directives and flow syntax.
+instruct guidance: Follow the task.
+context background: Shared background.
+
+agic merge(_):
+  instruct = guidance
+  context = none
+  tools = default
+  hands = none
+  handoffs = *
+  recall = far, near
+  lanes = 4
+  user: Merge {{_}} with {{_1._}}.
+
+flow research(_):
+  instruct = default
+  context = background
+  tools += fs
+  hands = merge
+  handoffs = none
+  recall = default
+  lanes = default
+  repeat 5 times windowing 2:
+    scatter using: Split {{_}} into items.
+    settle using merge:
+      from: Initial summary.
+    until: Compare {{_}} with {{_2._}}.
+  repeat windowing 3:
+    scatter:
+      Split {{_}} again.
+    settle:
+      Merge {{_}} with {{_1._}}.
+      from:
+        Initial content.
+    until: The summary is complete.

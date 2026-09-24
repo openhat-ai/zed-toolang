@@ -43,6 +43,9 @@ try {
       "variable.parameter": "#445566",
       string: "#556677",
       title: "#667788",
+      constant: "#778899",
+      "constant.builtin": "#8899aa",
+      number: "#99aabb",
     },
   }));
 
@@ -83,6 +86,36 @@ try {
       assert.match(overrides, /shebang[.]inclusive, start: \(0, 0\), end: \(1, 0\)/);
     }
   }
+  const flowFixture = readFileSync(join(root, "tests/fixtures/flow-syntax.too"), "utf8").replaceAll("\r\n", "\n");
+  for (const newline of ["\n", "\r\n"]) {
+    for (const finalNewline of [false, true]) {
+      writeFileSync(source, flowFixture.trimEnd().replaceAll("\n", newline) + (finalNewline ? newline : ""));
+      const tree = treeSitter("parse", source);
+      assert.doesNotMatch(tree, /invalid_|ERROR|MISSING/, "Current flow syntax must parse without recovery nodes");
+      const html = treeSitter("highlight", "--html", source);
+      for (const [color, tokens] of [
+        ["#334455", ["repeat", "windowing", "scatter", "settle", "from", "until"]],
+        ["#778899", ["guidance", "background"]],
+        ["#8899aa", ["default", "none", "*"]],
+        ["#99aabb", ["2", "3", "4", "5"]],
+      ]) {
+        const highlighted = [...html.matchAll(new RegExp(`<span style='color: ${color}'>([^<]*)</span>`, "g"))]
+          .map((match) => match[1].trim());
+        for (const token of tokens) {
+          assert.ok(highlighted.includes(token), `Missing flow highlight: ${token} (${color})`);
+        }
+      }
+      for (const name of queries) {
+        treeSitter("query", "--quiet", join(checkout, "queries", `${name}.scm`), source);
+      }
+      const outline = treeSitter("query", "--captures", join(checkout, "queries/outline.scm"), source);
+      const names = [...outline.matchAll(/capture: \d+ - name,.*text: `([^`]+)`/g)].map((match) => match[1]);
+      assert.deepEqual(names, ["guidance", "background", "merge", "research"]);
+      const indents = treeSitter("query", "--captures", join(checkout, "queries/indents.scm"), source);
+      assert.equal([...indents.matchAll(/capture: \d+ - indent,.*text: `settle/g)].length, 2,
+        "Both named and inline settle blocks must receive indentation captures");
+    }
+  }
   for (const [text, count] of [
     ["#!/usr/bin/env too", 1],
     ["#!", 1],
@@ -94,7 +127,7 @@ try {
     const overrides = treeSitter("query", "--captures", join(checkout, "queries/overrides.scm"), source);
     assert.equal([...overrides.matchAll(/capture: \d+ - shebang[.]inclusive,/g)].length, count);
   }
-  console.log("Zed query, highlight, and shebang scope checks passed for LF, CRLF, and EOF variants.");
+  console.log("Zed query, highlight, flow indentation, and shebang scope checks passed for LF, CRLF, and EOF variants.");
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }

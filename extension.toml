@@ -1,6 +1,6 @@
 id = "toolang"
 name = "Toolang"
-version = "0.3.4"
+version = "0.3.5"
 schema_version = 1
 authors = ["Brice Yan"]
 description = "Toolang syntax highlighting for Zed"
@@ -8,5 +8,5 @@ repository = "https://github.com/openhat-ai/zed-toolang"
 
 [grammars.toolang]
 repository = "https://github.com/openhat-ai/tree-sitter-toolang"
-# tree-sitter-toolang tag: v0.3.3
-commit = "053c7ca4b50d060bb2f3ec91b438073f27cea696"
+# tree-sitter-toolang tag: v0.3.4
+commit = "84098a2e28f4b90c9854a6f664f9c6948ee74d77"

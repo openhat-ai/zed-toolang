@@ -116,6 +116,67 @@ try {
         "Both named and inline settle blocks must receive indentation captures");
     }
   }
+  const execFixture = readFileSync(join(root, "tests/fixtures/flow-exec.too"), "utf8").replaceAll("\r\n", "\n");
+  for (const newline of ["\n", "\r\n"]) {
+    for (const finalNewline of [false, true]) {
+      writeFileSync(source, execFixture.trimEnd().replaceAll("\n", newline) + (finalNewline ? newline : ""));
+      const tree = treeSitter("parse", source);
+      assert.doesNotMatch(tree, /invalid_|ERROR|MISSING/, "Standalone exec must parse without recovery nodes");
+      assert.equal([...tree.matchAll(/\(exec_statement /g)].length, 4,
+        "Named and inline exec targets must be recognized inside and outside repeat bodies");
+      const html = treeSitter("highlight", "--html", source);
+      assert.equal([...html.matchAll(/<span style='color: #334455'>exec<\/span>/g)].length, 4,
+        "Only standalone exec keywords should receive keyword highlighting");
+      for (const literal of [
+        "        exec remains literal inside inline text.",
+        "    exec remains literal inside explicit text.",
+        "  executor and execution remain ordinary prose.",
+      ]) {
+        assert.ok(html.includes(`<span style='color: #556677'>${literal}</span>`),
+          `Missing literal text highlight: ${literal}`);
+      }
+      for (const name of queries) {
+        treeSitter("query", "--quiet", join(checkout, "queries", `${name}.scm`), source);
+      }
+      const outline = treeSitter("query", "--captures", join(checkout, "queries/outline.scm"), source);
+      const names = [...outline.matchAll(/capture: \d+ - name,.*text: `([^`]+)`/g)].map((match) => match[1]);
+      assert.deepEqual(names, ["grow", "evolve", "prose"]);
+      const indents = treeSitter("query", "--captures", join(checkout, "queries/indents.scm"), source);
+      assert.match(indents, /capture: \d+ - indent, start: \(4, 19\)/,
+        "The typed inline exec body must receive an indentation capture");
+    }
+  }
+  for (const nested of [false, true]) {
+    const indent = nested ? "    " : "  ";
+    const prefix = "flow transfer:\n" + (nested ? "  repeat 2 times:\n" : "");
+    for (const [target, node] of [
+      [" successor", "runnable"],
+      [": Complete the remaining work.", "inline_agic"],
+      [":\n  Complete the remaining work.", "inline_agic"],
+      [" -> Text: Complete the remaining work.", "inline_agic"],
+      [" -> Text:\n  Complete the remaining work.", "inline_agic"],
+    ]) {
+      for (const newline of ["\n", "\r\n"]) {
+        for (const finalNewline of [false, true]) {
+          const text = prefix + indent + "exec" + target.replaceAll("\n", "\n" + indent);
+          writeFileSync(source, text.replaceAll("\n", newline) + (finalNewline ? newline : ""));
+          const context = JSON.stringify({ target, nested, newline, finalNewline });
+          const tree = treeSitter("parse", source);
+          assert.doesNotMatch(tree, /invalid_|ERROR|MISSING/, `Invalid exec at EOF: ${context}`);
+          assert.equal([...tree.matchAll(/\(exec_statement /g)].length, 1,
+            `Expected one exec statement at EOF: ${context}`);
+          assert.ok(tree.includes(`target: (${node} `), `Incorrect exec target at EOF: ${context}`);
+          const html = treeSitter("highlight", "--html", source);
+          assert.equal([...html.matchAll(/<span style='color: #334455'>exec<\/span>/g)].length, 1,
+            `Missing exec keyword highlight at EOF: ${context}`);
+          if (node === "inline_agic") {
+            assert.match(html, /<span style='color: #556677'> *Complete the remaining work\.<\/span>/,
+              `Missing exec body highlight at EOF: ${context}`);
+          }
+        }
+      }
+    }
+  }
   for (const [text, count] of [
     ["#!/usr/bin/env too", 1],
     ["#!", 1],

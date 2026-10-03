@@ -1,0 +1,18 @@
+#@ Standalone exec targets and literal text boundaries.
+flow grow:
+  repeat 2 times:
+    repeat 3 times:
+      exec -> Text:
+        Complete {{_}}.
+        exec remains literal inside inline text.
+    exec: Complete the remaining work.
+    run after_inline
+  exec evolve # A named successor.
+
+flow evolve:
+  run:
+    exec remains literal inside explicit text.
+  exec grow
+
+flow prose:
+  executor and execution remain ordinary prose.

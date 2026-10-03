@@ -146,6 +146,37 @@ try {
         "The typed inline exec body must receive an indentation capture");
     }
   }
+  for (const nested of [false, true]) {
+    const indent = nested ? "    " : "  ";
+    const prefix = "flow transfer:\n" + (nested ? "  repeat 2 times:\n" : "");
+    for (const [target, node] of [
+      [" successor", "runnable"],
+      [": Complete the remaining work.", "inline_agic"],
+      [":\n  Complete the remaining work.", "inline_agic"],
+      [" -> Text: Complete the remaining work.", "inline_agic"],
+      [" -> Text:\n  Complete the remaining work.", "inline_agic"],
+    ]) {
+      for (const newline of ["\n", "\r\n"]) {
+        for (const finalNewline of [false, true]) {
+          const text = prefix + indent + "exec" + target.replaceAll("\n", "\n" + indent);
+          writeFileSync(source, text.replaceAll("\n", newline) + (finalNewline ? newline : ""));
+          const context = JSON.stringify({ target, nested, newline, finalNewline });
+          const tree = treeSitter("parse", source);
+          assert.doesNotMatch(tree, /invalid_|ERROR|MISSING/, `Invalid exec at EOF: ${context}`);
+          assert.equal([...tree.matchAll(/\(exec_statement /g)].length, 1,
+            `Expected one exec statement at EOF: ${context}`);
+          assert.ok(tree.includes(`target: (${node} `), `Incorrect exec target at EOF: ${context}`);
+          const html = treeSitter("highlight", "--html", source);
+          assert.equal([...html.matchAll(/<span style='color: #334455'>exec<\/span>/g)].length, 1,
+            `Missing exec keyword highlight at EOF: ${context}`);
+          if (node === "inline_agic") {
+            assert.match(html, /<span style='color: #556677'> *Complete the remaining work\.<\/span>/,
+              `Missing exec body highlight at EOF: ${context}`);
+          }
+        }
+      }
+    }
+  }
   for (const [text, count] of [
     ["#!/usr/bin/env too", 1],
     ["#!", 1],

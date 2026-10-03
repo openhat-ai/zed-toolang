@@ -33,3 +33,14 @@ flow research(_):
       from:
         Initial content.
     until: The summary is complete.
+
+flow handoff:
+  exec research
+
+flow inline_handoff:
+  exec: Complete the remaining work.
+
+flow nested_handoff:
+  repeat 2 times:
+    exec -> Text:
+      Complete {{_}}.

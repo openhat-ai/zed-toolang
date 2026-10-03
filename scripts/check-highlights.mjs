@@ -92,9 +92,11 @@ try {
       writeFileSync(source, flowFixture.trimEnd().replaceAll("\n", newline) + (finalNewline ? newline : ""));
       const tree = treeSitter("parse", source);
       assert.doesNotMatch(tree, /invalid_|ERROR|MISSING/, "Current flow syntax must parse without recovery nodes");
+      assert.equal([...tree.matchAll(/\(exec_statement\b/g)].length, 3,
+        "Named, inline, and repeat exec must parse as statements");
       const html = treeSitter("highlight", "--html", source);
       for (const [color, tokens] of [
-        ["#334455", ["repeat", "windowing", "scatter", "settle", "from", "until"]],
+        ["#334455", ["repeat", "windowing", "scatter", "settle", "from", "until", "exec"]],
         ["#778899", ["guidance", "background"]],
         ["#8899aa", ["default", "none", "*"]],
         ["#99aabb", ["2", "3", "4", "5"]],
@@ -110,7 +112,7 @@ try {
       }
       const outline = treeSitter("query", "--captures", join(checkout, "queries/outline.scm"), source);
       const names = [...outline.matchAll(/capture: \d+ - name,.*text: `([^`]+)`/g)].map((match) => match[1]);
-      assert.deepEqual(names, ["guidance", "background", "merge", "research"]);
+      assert.deepEqual(names, ["guidance", "background", "merge", "research", "handoff", "inline_handoff", "nested_handoff"]);
       const indents = treeSitter("query", "--captures", join(checkout, "queries/indents.scm"), source);
       assert.equal([...indents.matchAll(/capture: \d+ - indent,.*text: `settle/g)].length, 2,
         "Both named and inline settle blocks must receive indentation captures");

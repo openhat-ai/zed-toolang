@@ -22,9 +22,10 @@ The Tree-sitter grammar source of truth lives in:
 That grammar repository is also where npm, PyPI, and Cargo grammar packages are
 published.
 
-This extension pins the Toolang v0.3.3 grammar revision, supporting unified
+This extension pins the Toolang v0.3.4 grammar revision, supporting unified
 runnable directives, `repeat ... windowing`, and `settle` blocks with `from`
-initializers. It includes `#@` module documentation and
+initializers, plus named and inline `exec` in flows and repeats. It includes
+`#@` module documentation and
 `## @param NAME DESCRIPTION` highlighting while retaining `##!` compatibility.
 
 With Zed's comment continuation enabled, Enter preserves `# `, `#@ `, `## `,
@@ -65,7 +66,7 @@ Only run sync commands when you are updating the pinned grammar revision.
 To move this extension to a released grammar version:
 
 ```bash
-make pin-grammar-tag TAG=v0.3.3
+make pin-grammar-tag TAG=v0.3.4
 ```
 
 This resolves the grammar tag to a fixed commit SHA, updates

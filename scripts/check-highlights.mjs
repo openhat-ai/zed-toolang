@@ -116,6 +116,36 @@ try {
         "Both named and inline settle blocks must receive indentation captures");
     }
   }
+  const execFixture = readFileSync(join(root, "tests/fixtures/flow-exec.too"), "utf8").replaceAll("\r\n", "\n");
+  for (const newline of ["\n", "\r\n"]) {
+    for (const finalNewline of [false, true]) {
+      writeFileSync(source, execFixture.trimEnd().replaceAll("\n", newline) + (finalNewline ? newline : ""));
+      const tree = treeSitter("parse", source);
+      assert.doesNotMatch(tree, /invalid_|ERROR|MISSING/, "Standalone exec must parse without recovery nodes");
+      assert.equal([...tree.matchAll(/\(exec_statement /g)].length, 4,
+        "Named and inline exec targets must be recognized inside and outside repeat bodies");
+      const html = treeSitter("highlight", "--html", source);
+      assert.equal([...html.matchAll(/<span style='color: #334455'>exec<\/span>/g)].length, 4,
+        "Only standalone exec keywords should receive keyword highlighting");
+      for (const literal of [
+        "        exec remains literal inside inline text.",
+        "    exec remains literal inside explicit text.",
+        "  executor and execution remain ordinary prose.",
+      ]) {
+        assert.ok(html.includes(`<span style='color: #556677'>${literal}</span>`),
+          `Missing literal text highlight: ${literal}`);
+      }
+      for (const name of queries) {
+        treeSitter("query", "--quiet", join(checkout, "queries", `${name}.scm`), source);
+      }
+      const outline = treeSitter("query", "--captures", join(checkout, "queries/outline.scm"), source);
+      const names = [...outline.matchAll(/capture: \d+ - name,.*text: `([^`]+)`/g)].map((match) => match[1]);
+      assert.deepEqual(names, ["grow", "evolve", "prose"]);
+      const indents = treeSitter("query", "--captures", join(checkout, "queries/indents.scm"), source);
+      assert.match(indents, /capture: \d+ - indent, start: \(4, 19\)/,
+        "The typed inline exec body must receive an indentation capture");
+    }
+  }
   for (const [text, count] of [
     ["#!/usr/bin/env too", 1],
     ["#!", 1],

@@ -72,9 +72,10 @@ make pin-grammar-tag TAG=v0.4.0-alpha.5
 This resolves the grammar tag to a fixed commit SHA, updates
 `extension.toml`, and refreshes the checked-in query files.
 The sync script adapts upstream documentation and parameter annotation captures
-to Zed's `comment.doc` style, with title and text accents limited to prefixes. Keep
-editor-specific capture adaptation in the sync script; do not edit the synced
-copies directly.
+to Zed's `comment.doc` style, with title and text accents limited to prefixes.
+It also adapts indentation ranges so reducer initializers remain in scope and
+multiline `from:` values indent from their headers. Keep editor-specific capture
+adaptation in the sync script; do not edit the synced copies directly.
 `languages/toolang/overrides.scm` is maintained locally for Zed-specific editing
 behavior, including the shebang continuation exception.
 

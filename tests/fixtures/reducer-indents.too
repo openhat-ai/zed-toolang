@@ -1,0 +1,17 @@
+flow combine:
+  reduce using merge:
+    from:
+      Named initial content.
+  run after_named
+  reduce:
+    Merge the results.
+    from:
+      Inline initial content.
+  run after_inline
+  reduce:
+    Merge the results.
+    from: Same-line initializer.
+  run after_same_line
+  reduce using merge:
+    from:
+      Final initial content.

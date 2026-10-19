@@ -24,6 +24,24 @@ function treeSitter(...args) {
   return run("tree-sitter", [...args, "--config-path", config], checkout);
 }
 
+function indentationRanges() {
+  const output = treeSitter("query", join(checkout, "queries/indents.scm"), source);
+  return output.split(/^  pattern: \d+$/m).slice(1).flatMap((match) => {
+    const captures = new Map([...match.matchAll(
+      /capture: (?:\d+ - )?(indent|start|end), start: \((\d+), (\d+)\), end: \((\d+), (\d+)\)/g,
+    )].map((capture) => [capture[1], {
+      start: [Number(capture[2]), Number(capture[3])],
+      end: [Number(capture[4]), Number(capture[5])],
+    }]));
+    const indent = captures.get("indent");
+    if (!indent) return [];
+    // Zed uses @start/@end to adjust ranges and ignores single-line ranges.
+    const start = captures.get("start")?.end ?? indent.start;
+    const end = captures.get("end")?.start ?? indent.end;
+    return start[0] < end[0] ? [{ start, end }] : [];
+  });
+}
+
 try {
   run("git", ["init", "--quiet", checkout]);
   run("git", ["fetch", "--quiet", "--depth=1", repository, commit], checkout);
@@ -132,12 +150,39 @@ try {
       assert.deepEqual(names, ["guidance", "background", "merge", "research"]);
       const indents = treeSitter("query", "--captures", join(checkout, "queries/indents.scm"), source);
       for (const [header, column] of [
-        ["    reduce using merge:", 4], ["    reduce:", 10],
-        ["    until:", 9], ["  let note =", 2],
+        ["    reduce using merge:", 4], ["    reduce:", 4],
+        ["    until:", 0], ["  let note =", 2],
       ]) {
         const row = flowFixture.split("\n").indexOf(header);
         assert.ok(indents.includes(`- indent, start: (${row}, ${column})`),
           `Missing indentation capture for ${header.trim()}`);
+      }
+    }
+  }
+  const reducerFixture = readFileSync(join(root, "tests/fixtures/reducer-indents.too"), "utf8");
+  const reducerLines = reducerFixture.trimEnd().split("\n");
+  for (const newline of ["\n", "\r\n"]) {
+    for (const finalNewline of [false, true]) {
+      writeFileSync(source, reducerLines.join(newline) + (finalNewline ? newline : ""));
+      const tree = treeSitter("parse", source);
+      assert.doesNotMatch(tree, /invalid_|ERROR|MISSING/, "Reducer indentation fixture must parse without recovery");
+      const ranges = indentationRanges();
+      for (const [row, line] of reducerLines.entries()) {
+        if (line.trim() === "from:") {
+          assert.ok(ranges.some(({ start, end }) => start[0] === row && end[0] > row),
+            `Multiline initializer at row ${row} needs an effective indentation range`);
+        }
+        if (line === "  reduce:") {
+          const fromRow = reducerLines.findIndex((text, index) => index > row && text.startsWith("    from:"));
+          assert.ok(ranges.some(({ start, end }) => start[0] === row && end[0] > fromRow),
+            "An inline reducer must keep its initializer header inside its indentation range");
+          assert.ok(!ranges.some(({ start, end }) => start[0] === row && end[0] <= fromRow),
+            "An inline target must not outdent the initializer header");
+        }
+        if (line.startsWith("  run after_")) {
+          assert.ok(ranges.every(({ start, end }) => start[0] === 0 || start[0] >= row || end[0] <= row),
+            "Reducer indentation must end before the following statement");
+        }
       }
     }
   }
@@ -167,7 +212,7 @@ try {
       const names = [...outline.matchAll(/capture: \d+ - name,.*text: `([^`]+)`/g)].map((match) => match[1]);
       assert.deepEqual(names, ["grow", "evolve", "prose"]);
       const indents = treeSitter("query", "--captures", join(checkout, "queries/indents.scm"), source);
-      assert.match(indents, /capture: \d+ - indent, start: \(4, 11\)/,
+      assert.match(indents, /capture: \d+ - indent, start: \(4, 6\)/,
         "The typed inline exec header must receive an indentation capture");
     }
   }

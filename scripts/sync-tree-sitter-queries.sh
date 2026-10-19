@@ -94,6 +94,20 @@ rewrite_query_for_zed() {
       next
     }
     {
+      # Include the owning statement so inline reducers keep from: in scope.
+      if ($0 == "(inline_agic (newline) content: (content)) @indent") {
+        print "(_ target: (inline_agic (newline) content: (content))) @indent"
+        next
+      }
+      # Zed ignores single-line ranges; span the initializer from its header.
+      if ($0 == "  \"from\" @indent") {
+        print "  \"from\" @start"
+        next
+      }
+      if ($0 == "  (newline) from: (content))") {
+        print "  (newline) from: (content) @indent)"
+        next
+      }
       # Accent documentation prefixes; keep their contents in comment style.
       if ($0 == "(program_doc) @comment.documentation") {
         sub(/@comment[.]documentation$/, "@title")

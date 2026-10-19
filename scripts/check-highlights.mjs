@@ -52,7 +52,8 @@ try {
   for (const newline of ["\n", "\r\n"]) {
     for (const finalNewline of [false, true]) {
       writeFileSync(source, fixture.trimEnd().replaceAll("\n", newline) + (finalNewline ? newline : ""));
-      treeSitter("parse", "--quiet", source);
+      const tree = treeSitter("parse", source);
+      assert.doesNotMatch(tree, /invalid_|ERROR|MISSING/, "Documentation must parse without recovery nodes");
       const html = treeSitter("highlight", "--html", source);
       for (const expected of [
         "<span style='color: #112233'>#!/usr/bin/env too</span>",
@@ -60,11 +61,11 @@ try {
         "<span style='color: #112233'># Inline comment.</span>",
         "<span style='color: #112233'>#! Later shebang.</span>",
         "<span style='color: #667788'>#@ <span style='color: #112233'>Module docs.</span></span>",
-        "<span style='color: #667788'>##! <span style='color: #112233'>Legacy module docs.</span></span>",
+        "<span style='color: #223344'>##<span style='color: #112233'>! Item docs with an exclamation mark.</span></span>",
         "<span style='color: #223344'>## <span style='color: #112233'>Item docs.</span></span>",
-        "<span style='color: #667788'>##! <span style='color: #112233'>Indented legacy docs.</span></span>",
+        "<span style='color: #223344'>##<span style='color: #112233'>! Indented item docs.</span></span>",
         "<span style='color: #667788'>#@</span>",
-        "<span style='color: #667788'>##!</span>",
+        "<span style='color: #223344'>##<span style='color: #112233'>!</span></span>",
         "<span style='color: #223344'>##</span>",
         "<span style='color: #223344'>## <span style='color: #112233'>@param</span> <span style='color: #112233'>_</span> <span style='color: #112233'>Source material.</span></span>",
         "<span style='color: #223344'>## <span style='color: #112233'>@param</span> <span style='color: #112233'>style</span> <span style='color: #112233'>Preferred summary style.</span></span>",
@@ -92,9 +93,20 @@ try {
       writeFileSync(source, flowFixture.trimEnd().replaceAll("\n", newline) + (finalNewline ? newline : ""));
       const tree = treeSitter("parse", source);
       assert.doesNotMatch(tree, /invalid_|ERROR|MISSING/, "Current flow syntax must parse without recovery nodes");
+      for (const [node, count] of [
+        ["spawn_statement", 2], ["await_statement", 2], ["let_statement", 4],
+        ["generate_statement", 2], ["map_statement", 1], ["reduce_statement", 2],
+        ["keep_statement", 2], ["drop_statement", 2], ["sort_statement", 1],
+        ["repeat_statement", 3], ["until_clause", 3],
+      ]) {
+        assert.equal([...tree.matchAll(new RegExp(`\\(${node} `, "g"))].length, count,
+          `Expected ${count} ${node} nodes instead of implicit text`);
+      }
       const html = treeSitter("highlight", "--html", source);
       for (const [color, tokens] of [
-        ["#334455", ["repeat", "windowing", "scatter", "settle", "from", "until"]],
+        ["#334455", ["async", "run", "spawn", "await", "let", "generate", "map", "reduce",
+          "keep", "drop", "sort", "ascending", "by", "if", "using", "in", "lanes", "first", "last",
+          "repeat", "windowing", "from", "until"]],
         ["#778899", ["guidance", "background"]],
         ["#8899aa", ["default", "none", "*"]],
         ["#99aabb", ["2", "3", "4", "5"]],
@@ -105,6 +117,13 @@ try {
           assert.ok(highlighted.includes(token), `Missing flow highlight: ${token} (${color})`);
         }
       }
+      for (const literal of [
+        "    async run, spawn, and await remain literal here.",
+        "      until remains literal in condition text.",
+      ]) {
+        assert.ok(html.includes(`<span style='color: #556677'>${literal}</span>`),
+          `Missing literal flow text highlight: ${literal}`);
+      }
       for (const name of queries) {
         treeSitter("query", "--quiet", join(checkout, "queries", `${name}.scm`), source);
       }
@@ -112,8 +131,14 @@ try {
       const names = [...outline.matchAll(/capture: \d+ - name,.*text: `([^`]+)`/g)].map((match) => match[1]);
       assert.deepEqual(names, ["guidance", "background", "merge", "research"]);
       const indents = treeSitter("query", "--captures", join(checkout, "queries/indents.scm"), source);
-      assert.equal([...indents.matchAll(/capture: \d+ - indent,.*text: `settle/g)].length, 2,
-        "Both named and inline settle blocks must receive indentation captures");
+      for (const [header, column] of [
+        ["    reduce using merge:", 4], ["    reduce:", 10],
+        ["    until:", 9], ["  let note =", 2],
+      ]) {
+        const row = flowFixture.split("\n").indexOf(header);
+        assert.ok(indents.includes(`- indent, start: (${row}, ${column})`),
+          `Missing indentation capture for ${header.trim()}`);
+      }
     }
   }
   const execFixture = readFileSync(join(root, "tests/fixtures/flow-exec.too"), "utf8").replaceAll("\r\n", "\n");
@@ -142,15 +167,15 @@ try {
       const names = [...outline.matchAll(/capture: \d+ - name,.*text: `([^`]+)`/g)].map((match) => match[1]);
       assert.deepEqual(names, ["grow", "evolve", "prose"]);
       const indents = treeSitter("query", "--captures", join(checkout, "queries/indents.scm"), source);
-      assert.match(indents, /capture: \d+ - indent, start: \(4, 19\)/,
-        "The typed inline exec body must receive an indentation capture");
+      assert.match(indents, /capture: \d+ - indent, start: \(4, 11\)/,
+        "The typed inline exec header must receive an indentation capture");
     }
   }
   for (const nested of [false, true]) {
     const indent = nested ? "    " : "  ";
     const prefix = "flow transfer:\n" + (nested ? "  repeat 2 times:\n" : "");
     for (const [target, node] of [
-      [" successor", "runnable"],
+      [" successor", "runnable_name"],
       [": Complete the remaining work.", "inline_agic"],
       [":\n  Complete the remaining work.", "inline_agic"],
       [" -> Text: Complete the remaining work.", "inline_agic"],

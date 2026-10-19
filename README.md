@@ -22,18 +22,18 @@ The Tree-sitter grammar source of truth lives in:
 That grammar repository is also where npm, PyPI, and Cargo grammar packages are
 published.
 
-This extension pins the Toolang v0.3.4 grammar revision, supporting standalone
-`exec` statements with named and inline targets, unified runnable directives,
-`repeat ... windowing`, and `settle` blocks with `from` initializers.
-It includes `#@` module documentation and
-`## @param NAME DESCRIPTION` highlighting while retaining `##!` compatibility.
+This extension pins tree-sitter-toolang v0.4.0-alpha.5, including its unified CST,
+`generate`/`reduce` collection syntax, `spawn`, `async run`/`await`, and flexible
+`repeat` conditions. It includes `#@` program documentation, `##` item
+documentation, and `## @param NAME DESCRIPTION` highlighting. In this grammar,
+`##!` is item documentation whose text starts with `!`.
 
-With Zed's comment continuation enabled, Enter preserves `# `, `#@ `, `## `,
-and legacy `##! ` prefixes. A shebang never adds a comment prefix on the next
-line. Toggle Comments still uses `# ` for ordinary code.
+With Zed's comment continuation enabled, Enter preserves `# `, `#@ `, and `## `
+prefixes. A shebang never adds a comment prefix on the next line. Toggle Comments
+still uses `# ` for ordinary code.
 
-Only documentation prefixes receive new accent colors: module doc prefixes
-(`#@` and `##!`) use `title`, while item doc prefixes (`##`) use `text.literal`.
+Only documentation prefixes receive accent colors: program doc prefixes
+(`#@`) use `title`, while item and parameter doc prefixes (`##`) use `text.literal`.
 Documentation prose, `@param`, and parameter names all use `comment.doc` so a
 parameter annotation has one consistent comment color after its prefix. Plain
 comments and shebangs retain `comment`, and code keeps its original styles.
@@ -66,7 +66,7 @@ Only run sync commands when you are updating the pinned grammar revision.
 To move this extension to a released grammar version:
 
 ```bash
-make pin-grammar-tag TAG=v0.3.4
+make pin-grammar-tag TAG=v0.4.0-alpha.5
 ```
 
 This resolves the grammar tag to a fixed commit SHA, updates
@@ -94,8 +94,9 @@ make check
 
 Checks require Rust, Node.js, Git, and a C compiler. They fetch the pinned grammar,
 then verify query synchronization, rendered highlighting, outlines, and
-indentation for documentation, parameters, literal text, settle blocks, and
-standalone exec targets with LF, CRLF, and EOF variants.
+indentation for documentation, parameters, literal text, collection operations,
+spawn/async/await, repeat conditions, and standalone exec targets with LF, CRLF,
+and EOF variants.
 
 If you are working on the grammar itself, validate it in the grammar
 repository:

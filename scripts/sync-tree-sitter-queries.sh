@@ -95,17 +95,26 @@ rewrite_query_for_zed() {
     }
     {
       # Accent documentation prefixes; keep their contents in comment style.
-      if ($0 == "(module_doc_comment) @comment.documentation") {
+      if ($0 == "(program_doc) @comment.documentation") {
         sub(/@comment[.]documentation$/, "@title")
+        print
+        print "(program_doc text: (text) @comment.doc)"
+        next
       }
-      if ($0 == "(item_doc_comment) @comment.documentation") {
+      if ($0 == "(item_doc) @comment.documentation") {
         sub(/@comment[.]documentation$/, "@text.literal")
         print
         # Keep prose in comment style; only prefixes retain the parent color.
-        print "(comment_text) @comment.doc"
+        print "(item_doc text: (text) @comment.doc)"
         next
       }
-      if ($0 ~ /^\(param_doc_tag /) {
+      if ($0 == "(param_doc) @comment.documentation") {
+        sub(/@comment[.]documentation$/, "@text.literal")
+        print
+        print "(param_doc description: (text) @comment.doc)"
+        next
+      }
+      if ($0 ~ /^\(param_doc /) {
         gsub(/@keyword|@variable[.]parameter/, "@comment.doc")
       }
       sub(/@comment[.]documentation$/, "@comment.doc")

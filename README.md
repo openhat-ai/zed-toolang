@@ -69,21 +69,27 @@ To move this extension to a released grammar version:
 make pin-grammar-tag TAG=v0.4.0-alpha.5
 ```
 
-This resolves the grammar tag to a fixed commit SHA, updates
-`extension.toml`, and refreshes the checked-in query files.
-The sync script adapts upstream documentation and parameter annotation captures
-to Zed's `comment.doc` style, with title and text accents limited to prefixes.
-It also adapts indentation ranges so reducer initializers remain in scope and
-multiline `from:` values indent from their headers. Keep editor-specific capture
-adaptation in the sync script; do not edit the synced copies directly.
-`languages/toolang/overrides.scm` is maintained locally for Zed-specific editing
-behavior, including the shebang continuation exception.
+This resolves the grammar tag to a fixed commit SHA and fetches that revision
+before updating `extension.toml` and the generated queries. Query ownership is:
 
-To re-sync the currently pinned grammar revision:
+| Files under `languages/toolang/` | Maintenance |
+| --- | --- |
+| `highlights.scm`, `indents.scm`, `overrides.scm`, `config.toml` | Zed-owned rules; edit directly in this repository. |
+| `outline.scm`, `injections.scm` | Generated upstream copies; refresh with `make sync`. |
+
+When upgrading the grammar, review its CST and upstream query changes against
+the Zed-owned rules. Documentation colors, indentation ranges, and editing scopes
+are explicit queries rather than text substitutions applied to upstream files.
+
+To refresh generated queries from the currently pinned grammar revision:
 
 ```bash
 make sync
 ```
+
+`make verify-sync` checks generated queries without modifying them. The sync and
+pin commands read all upstream inputs before changing files and always clean up
+their temporary checkouts.
 
 Before committing maintainer changes, install the grammar test CLI and run the
 checks:
@@ -93,11 +99,14 @@ npm install --global tree-sitter-cli@0.24.7
 make check
 ```
 
-Checks require Rust, Node.js, Git, and a C compiler. They fetch the pinned grammar,
-then verify query synchronization, rendered highlighting, outlines, and
+Checks require Rust, Node.js, Git, and a C compiler. `make test-sync` runs offline
+workflow tests against temporary local Git repositories. The full check fetches
+the pinned grammar once, then verifies query synchronization, query compilation,
+rendered highlighting, outlines, and
 indentation for documentation, parameters, literal text, collection operations,
 spawn/async/await, repeat conditions, and standalone exec targets with LF, CRLF,
-and EOF variants.
+and EOF variants. These checks exercise parser and query contracts; interactive
+editing behavior also requires testing in Zed.
 
 If you are working on the grammar itself, validate it in the grammar
 repository:

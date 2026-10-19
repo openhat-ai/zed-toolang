@@ -1,5 +1,5 @@
-; Source of truth for Toolang Tree-sitter highlight captures.
-; Synced copy for the Zed extension. Edit the grammar repository instead.
+; Zed highlight rules for the pinned Toolang CST. Maintained in this extension.
+; Keep documentation prefix accents separate from comment text colors.
 
 (plain_comment) @comment
 (shebang_comment) @comment

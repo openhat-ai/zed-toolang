@@ -1,5 +1,8 @@
+; Generated from tree-sitter-toolang/queries/outline.scm.
+; Run make sync to refresh this copy.
+
 ; Source of truth for Toolang Tree-sitter outline queries.
-; Synced copy for the Zed extension. Edit the grammar repository instead.
+; Maintain this file in this repository and consume it from tooling.
 
 (agic
   name: (runnable_name) @name) @item

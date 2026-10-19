@@ -1,5 +1,5 @@
-; Source of truth for Toolang Tree-sitter indentation queries.
-; Synced copy for the Zed extension. Edit the grammar repository instead.
+; Zed indentation rules for the pinned Toolang CST. Maintained in this extension.
+; Ranges run from structural headers through their complete bodies.
 
 (struct) @indent
 (psyche) @indent

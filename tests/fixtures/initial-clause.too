@@ -1,0 +1,22 @@
+flow initial(initial: Text):
+  let initial = Seed.
+  let from = Former keyword as a name.
+  reduce:
+    Merge the input.
+    from: Former initializer is literal text.
+      initial: Nested literal text.
+    initial:
+      #@ Literal initializer content.
+  reduce using initial:
+    initial: Same-line initializer.
+  run initial
+  exec from
+  run:
+    initial: Explicit literal text.
+    from: Explicit legacy text.
+
+flow boundaries:
+  initially: Ordinary prose.
+  initial_value: Ordinary prose.
+  initial2: Ordinary prose.
+  from remains ordinary prose.

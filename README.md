@@ -22,11 +22,12 @@ The Tree-sitter grammar source of truth lives in:
 That grammar repository is also where npm, PyPI, and Cargo grammar packages are
 published.
 
-This extension pins tree-sitter-toolang v0.4.0-alpha.5, including its unified CST,
+This extension pins tree-sitter-toolang v0.4.0-alpha.6, including its unified CST,
 `generate`/`reduce` collection syntax, `spawn`, `async run`/`await`, and flexible
-`repeat` conditions. It includes `#@` program documentation, `##` item
-documentation, and `## @param NAME DESCRIPTION` highlighting. In this grammar,
-`##!` is item documentation whose text starts with `!`.
+`repeat` conditions. Reducer initializers use `initial:`. It includes `#@` program
+documentation, `##` item documentation, and `## @param NAME DESCRIPTION`
+highlighting. In this grammar, `##!` is item documentation whose text starts
+with `!`.
 
 With Zed's comment continuation enabled, Enter preserves `# `, `#@ `, and `## `
 prefixes in comments. Syntax scopes disable continuation in literal content and
@@ -77,7 +78,7 @@ Only run sync commands when you are updating the pinned grammar revision.
 To move this extension to a released grammar version:
 
 ```bash
-make pin-grammar-tag TAG=v0.4.0-alpha.5
+make pin-grammar-tag TAG=v0.4.0-alpha.6
 ```
 
 This resolves the grammar tag to a fixed commit SHA and fetches that revision

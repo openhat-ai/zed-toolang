@@ -29,8 +29,19 @@ documentation, and `## @param NAME DESCRIPTION` highlighting. In this grammar,
 `##!` is item documentation whose text starts with `!`.
 
 With Zed's comment continuation enabled, Enter preserves `# `, `#@ `, and `## `
-prefixes. A shebang never adds a comment prefix on the next line. Toggle Comments
-still uses `# ` for ordinary code.
+prefixes in comments. Syntax scopes disable continuation in literal content and
+the initial shebang. Toggle Comments uses `# ` for ordinary code.
+
+Enter increases indentation after an empty structural header or multiline
+assignment. Other lines preserve their indentation; use Shift+Tab to end a
+block. This uses header patterns rather than CST end ranges, because indentation
+defines Toolang's block boundaries. A literal line shaped exactly like a header
+also triggers this indentation heuristic.
+
+Zed 1.22.0 does not apply syntax scopes at EOF, so a shebang or literal hash line
+can still continue a comment there. Zed 1.24.3 includes the
+[editor fix](https://github.com/zed-industries/zed/blob/v1.24.3/crates/language/src/buffer.rs#L4430-L4437);
+restart Zed after updating to apply it.
 
 Only documentation prefixes receive accent colors: program doc prefixes
 (`#@`) use `title`, while item and parameter doc prefixes (`##`) use `text.literal`.
@@ -74,12 +85,14 @@ before updating `extension.toml` and the generated queries. Query ownership is:
 
 | Files under `languages/toolang/` | Maintenance |
 | --- | --- |
-| `highlights.scm`, `indents.scm`, `overrides.scm`, `config.toml` | Zed-owned rules; edit directly in this repository. |
-| `outline.scm`, `injections.scm` | Generated upstream copies; refresh with `make sync`. |
+| `highlights.scm`, `overrides.scm`, `config.toml` | Zed-owned rules; edit directly in this repository. |
+| `outline.scm`, `injections.scm` | Generated upstream copies; refresh with `make sync`. Comment-only queries are omitted because Zed requires captures in each loaded query. |
 
 When upgrading the grammar, review its CST and upstream query changes against
-the Zed-owned rules. Documentation colors, indentation ranges, and editing scopes
-are explicit queries rather than text substitutions applied to upstream files.
+the Zed-owned rules. Documentation colors and editing scopes are explicit
+queries, and indentation lives in the language configuration. Do not add
+structural `indents.scm` ranges: they cause unwanted outdents when a block ends
+at EOF, including while its first body line is being typed.
 
 To refresh generated queries from the currently pinned grammar revision:
 
@@ -102,11 +115,11 @@ make check
 Checks require Rust, Node.js, Git, and a C compiler. `make test-sync` runs offline
 workflow tests against temporary local Git repositories. The full check fetches
 the pinned grammar once, then verifies query synchronization, query compilation,
-rendered highlighting, outlines, and
-indentation for documentation, parameters, literal text, collection operations,
+rendered highlighting, outlines, header indentation, and editing scopes for
+documentation, parameters, literal text, collection operations,
 spawn/async/await, repeat conditions, and standalone exec targets with LF, CRLF,
 and EOF variants. These checks exercise parser and query contracts; interactive
-editing behavior also requires testing in Zed.
+editing behavior also requires testing in Zed; see [the manual checks](tests/README.md).
 
 If you are working on the grammar itself, validate it in the grammar
 repository:

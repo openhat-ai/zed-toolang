@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -36,7 +36,9 @@ function fixture(t) {
   writeFileSync(manifest, `[grammars.toolang]\nrepository = "${upstream}"\ncommit = "${revision}"\n`
     + '\n[grammars.unrelated]\nrepository = "unused"\ncommit = "unchanged"\n');
   const query = (name) => join(project, "languages/toolang", name);
-  const snapshot = () => Object.fromEntries(files.map((name) => [name, readFileSync(query(name), "utf8")]));
+  const snapshot = () => Object.fromEntries(files.map((name) => [name,
+    existsSync(query(name)) ? readFileSync(query(name), "utf8") : null,
+  ]));
   const run = (script, ...args) => execFileSync(join(project, "scripts", script), args, {
     cwd: project, encoding: "utf8", env: { ...process.env, TMPDIR: scratch, TOOLANG_GRAMMAR_DIR: "" },
     stdio: ["ignore", "pipe", "pipe"],
@@ -49,7 +51,7 @@ test("sync preserves Zed-owned highlights, indentation, and editing scopes", (t)
   const before = f.snapshot();
   f.run("sync-tree-sitter-queries.sh");
   for (const name of ["highlights.scm", "indents.scm", "overrides.scm"]) {
-    assert.equal(readFileSync(f.query(name), "utf8"), before[name]);
+    assert.equal(f.snapshot()[name], before[name]);
   }
 });
 
@@ -62,14 +64,29 @@ test("verification reports drift without overwriting the changed query", (t) => 
   assert.deepEqual(f.snapshot(), before);
 });
 
+test("comment-only upstream queries are omitted from Zed and stale copies are removed", (t) => {
+  const f = fixture(t);
+  f.run("sync-tree-sitter-queries.sh");
+  assert.ok(existsSync(f.query("injections.scm")));
+  writeFileSync(join(f.upstream, "queries/injections.scm"), "; No supported language injections.\n\n");
+  const revision = f.commit();
+  writeFileSync(f.manifest, readFileSync(f.manifest, "utf8").replace(/commit = "[^"]+"/, `commit = "${revision}"`));
+  f.run("sync-tree-sitter-queries.sh");
+  assert.ok(!existsSync(f.query("injections.scm")), "Zed rejects injection queries without content captures");
+  f.run("verify-tree-sitter-queries.sh");
+  writeFileSync(f.query("injections.scm"), "; A stale empty query.\n");
+  assert.throws(() => f.run("verify-tree-sitter-queries.sh"));
+  assert.equal(readFileSync(f.query("injections.scm"), "utf8"), "; A stale empty query.\n");
+});
+
 test("successful verification leaves contents and modification times unchanged", (t) => {
   const f = fixture(t);
   f.run("sync-tree-sitter-queries.sh");
   const before = f.snapshot();
-  for (const name of files) utimesSync(f.query(name), 1000, 1000);
+  for (const name of files.filter((name) => existsSync(f.query(name)))) utimesSync(f.query(name), 1000, 1000);
   f.run("verify-tree-sitter-queries.sh");
   assert.deepEqual(f.snapshot(), before);
-  for (const name of files) assert.equal(statSync(f.query(name)).mtimeMs, 1_000_000);
+  for (const name of files.filter((name) => existsSync(f.query(name)))) assert.equal(statSync(f.query(name)).mtimeMs, 1_000_000);
 });
 
 test("sync reads all upstream inputs before changing any generated file", (t) => {

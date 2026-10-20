@@ -4,6 +4,8 @@ path_suffixes = ["too"]
 line_comments = ["# ", "#@ ", "## "]
 tab_size = 4
 hard_tabs = false
+# Indentation defines block boundaries; CST end ranges cannot predict Enter at EOF.
+increase_indent_pattern = '^[ \t]*(?:(?:struct|psyche|skill|service|prompt|chore|context|instruct|agic|flow|repeat|run|exec|spawn|seek|ask|generate|map|reduce|keep|drop|sort|until|from|user|assistant|tool|let|async)\b[^#\r\n]*:[ \t]*(?:#.*)?|let[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]*=[ \t]*)$'
 brackets = [
   { start = "{", end = "}", close = true, newline = true },
   { start = "[", end = "]", close = true, newline = false },
@@ -11,4 +13,7 @@ brackets = [
 ]
 
 [overrides.shebang]
+line_comments = []
+
+[overrides.content]
 line_comments = []

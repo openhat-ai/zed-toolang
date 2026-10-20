@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,29 +23,31 @@ export function checkLanguage(checkout) {
     return run("tree-sitter", [...args, "--config-path", config], checkout);
   }
 
-  function indentationRanges() {
-    const output = treeSitter("query", join(checkout, "queries/indents.scm"), source);
-    return output.split(/^  pattern: \d+$/m).slice(1).flatMap((match) => {
-      const captures = new Map([...match.matchAll(
-        /capture: (?:\d+ - )?(indent|start|end), start: \((\d+), (\d+)\), end: \((\d+), (\d+)\)/g,
-      )].map((capture) => [capture[1], {
-        start: [Number(capture[2]), Number(capture[3])],
-        end: [Number(capture[4]), Number(capture[5])],
-      }]));
-      const indent = captures.get("indent");
-      if (!indent) return [];
-      // Zed uses @start/@end to adjust ranges and ignores single-line ranges.
-      const start = captures.get("start")?.end ?? indent.start;
-      const end = captures.get("end")?.start ?? indent.end;
-      return start[0] < end[0] ? [{ start, end }] : [];
-    });
-  }
-
   try {
-    const queries = queryNames;
-    for (const name of queries) {
-      copyFileSync(join(root, "languages/toolang", `${name}.scm`), join(checkout, "queries", `${name}.scm`));
+    const queries = queryNames.filter((name) => existsSync(join(root, "languages/toolang", `${name}.scm`)));
+    for (const name of queryNames) {
+      const target = join(checkout, "queries", `${name}.scm`);
+      if (queries.includes(name)) copyFileSync(join(root, "languages/toolang", `${name}.scm`), target);
+      // The upstream CLI manifest declares query paths even when Zed omits them.
+      else writeFileSync(target, "");
     }
+    const languageConfig = readFileSync(join(root, "languages/toolang/config.toml"), "utf8");
+    const indentPattern = languageConfig.match(/^increase_indent_pattern = '([^']+)'$/m)?.[1];
+    assert.ok(indentPattern, "Empty block headers need a newline indentation rule");
+    const increaseIndent = new RegExp(indentPattern);
+    for (const header of [
+      "flow sample:", "agic reply(_: Text) -> Text:", "struct Result:", "psyche source:",
+      "skill lookup:", "service api:", "prompt guide:", "chore prepare:", "context:", "instruct:",
+      "    run:", "    exec -> Text:", "    spawn:", "    async run:", "    seek worker:", "    ask:",
+      "    generate 2 using:", "    map using:", "    reduce using merge:", "    reduce:",
+      "    keep if:", "    drop if:", "    sort by:", "    repeat 2 times:", "    until:",
+      "        from:", "    user:", "    assistant:", "    tool:",
+      "    let note =", "    let notes = run:", "    run: # Header comment.",
+    ]) assert.ok(increaseIndent.test(header), `Enter must indent an empty header: ${header}`);
+    for (const text of [
+      "# flow sample:", "## user:", "    Read the following:", "    run: Inline text.",
+      "    let note = inline text", "    runner:", "    https://example.com:",
+    ]) assert.ok(!increaseIndent.test(text), `Ordinary text must not trigger header indentation: ${text}`);
     writeFileSync(config, JSON.stringify({
       "parser-directories": [dirname(checkout)],
       theme: {
@@ -99,6 +101,8 @@ export function checkLanguage(checkout) {
         const overrides = treeSitter("query", "--captures", join(checkout, "queries/overrides.scm"), source);
         assert.equal([...overrides.matchAll(/capture: \d+ - shebang[.]inclusive,/g)].length, 1);
         assert.match(overrides, /shebang[.]inclusive, start: \(0, 0\), end: \(1, 0\)/);
+        assert.match(overrides, /content[.]inclusive, start: \(14, 0\), end: \(19, 0\)/,
+          "Literal hash-prefixed content must disable comment continuation");
       }
     }
     const flowFixture = readFileSync(join(root, "tests/fixtures/flow-syntax.too"), "utf8").replaceAll("\r\n", "\n");
@@ -144,15 +148,6 @@ export function checkLanguage(checkout) {
         const outline = treeSitter("query", "--captures", join(checkout, "queries/outline.scm"), source);
         const names = [...outline.matchAll(/capture: \d+ - name,.*text: `([^`]+)`/g)].map((match) => match[1]);
         assert.deepEqual(names, ["guidance", "background", "merge", "research"]);
-        const indents = treeSitter("query", "--captures", join(checkout, "queries/indents.scm"), source);
-        for (const [header, column] of [
-          ["    reduce using merge:", 4], ["    reduce:", 4],
-          ["    until:", 0], ["  let note =", 2],
-        ]) {
-          const row = flowFixture.split("\n").indexOf(header);
-          assert.ok(indents.includes(`- indent, start: (${row}, ${column})`),
-            `Missing indentation capture for ${header.trim()}`);
-        }
       }
     }
     const reducerFixture = readFileSync(join(root, "tests/fixtures/reducer-indents.too"), "utf8");
@@ -162,23 +157,8 @@ export function checkLanguage(checkout) {
         writeFileSync(source, reducerLines.join(newline) + (finalNewline ? newline : ""));
         const tree = treeSitter("parse", source);
         assert.doesNotMatch(tree, /invalid_|ERROR|MISSING/, "Reducer indentation fixture must parse without recovery");
-        const ranges = indentationRanges();
-        for (const [row, line] of reducerLines.entries()) {
-          if (line.trim() === "from:") {
-            assert.ok(ranges.some(({ start, end }) => start[0] === row && end[0] > row),
-              `Multiline initializer at row ${row} needs an effective indentation range`);
-          }
-          if (line === "  reduce:") {
-            const fromRow = reducerLines.findIndex((text, index) => index > row && text.startsWith("    from:"));
-            assert.ok(ranges.some(({ start, end }) => start[0] === row && end[0] > fromRow),
-              "An inline reducer must keep its initializer header inside its indentation range");
-            assert.ok(!ranges.some(({ start, end }) => start[0] === row && end[0] <= fromRow),
-              "An inline target must not outdent the initializer header");
-          }
-          if (line.startsWith("  run after_")) {
-            assert.ok(ranges.every(({ start, end }) => start[0] === 0 || start[0] >= row || end[0] <= row),
-              "Reducer indentation must end before the following statement");
-          }
+        for (const line of reducerLines.filter((line) => line.trim().endsWith(":"))) {
+          assert.ok(increaseIndent.test(line), `Reducer header must indent: ${line}`);
         }
       }
     }
@@ -207,9 +187,6 @@ export function checkLanguage(checkout) {
         const outline = treeSitter("query", "--captures", join(checkout, "queries/outline.scm"), source);
         const names = [...outline.matchAll(/capture: \d+ - name,.*text: `([^`]+)`/g)].map((match) => match[1]);
         assert.deepEqual(names, ["grow", "evolve", "prose"]);
-        const indents = treeSitter("query", "--captures", join(checkout, "queries/indents.scm"), source);
-        assert.match(indents, /capture: \d+ - indent, start: \(4, 6\)/,
-          "The typed inline exec header must receive an indentation capture");
       }
     }
     for (const nested of [false, true]) {
@@ -254,7 +231,7 @@ export function checkLanguage(checkout) {
       const overrides = treeSitter("query", "--captures", join(checkout, "queries/overrides.scm"), source);
       assert.equal([...overrides.matchAll(/capture: \d+ - shebang[.]inclusive,/g)].length, count);
     }
-    console.log("Zed query, highlight, flow indentation, and shebang scope checks passed for LF, CRLF, and EOF variants.");
+    console.log("Zed query, highlight, header indentation, and editing scope checks passed for LF, CRLF, and EOF variants.");
   } finally {
     rmSync(temporary, { recursive: true, force: true });
   }

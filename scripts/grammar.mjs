@@ -36,7 +36,7 @@ try {
       withSource(pin, args[0] || process.env.TOOLANG_GRAMMAR_DIR, (checkout) => {
         const queries = upstreamQueries(checkout);
         writeQueries(root, queries);
-        console.log(`Synced ${queries.size} upstream query files; Zed-owned queries are maintained locally.`);
+        console.log("Synchronized upstream queries; Zed-owned rules are maintained locally.");
       });
       break;
     case "verify":

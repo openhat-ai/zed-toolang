@@ -1,149 +1,49 @@
 # Toolang for Zed
 
-Zed extension for Toolang `.too` files.
+Zed support for `.too` files, using
+[tree-sitter-toolang](https://github.com/openhat-ai/tree-sitter-toolang).
 
-## Overview
+## Use
 
-This repository contains the files that Zed loads directly:
+Run `zed: install dev extension`, select this checkout, and open a `.too` file.
+Zed uses the checked-in queries.
 
-- `extension.toml`
-- `languages/toolang/config.toml`
-- `languages/toolang/*.scm`
-- the Rust extension entrypoint under `src/`
+## Maintain
 
-These files are checked into Git on purpose. Local use and published releases
-should work from this repository alone, without fetching grammar assets at
-install time.
+The exact grammar tag and commit are pinned in [extension.toml](extension.toml).
+Checks require Rust, Node.js, Git, a C compiler, and Tree-sitter CLI 0.24.7:
 
-The Tree-sitter grammar source of truth lives in:
-
-- GitHub: `https://github.com/openhat-ai/tree-sitter-toolang`
-
-That grammar repository is also where npm, PyPI, and Cargo grammar packages are
-published.
-
-This extension pins tree-sitter-toolang v0.4.0-alpha.6, including its unified CST,
-`generate`/`reduce` collection syntax, `spawn`, `async run`/`await`, and flexible
-`repeat` conditions. Reducer initializers use `initial:`. It includes `#@` program
-documentation, `##` item documentation, and `## @param NAME DESCRIPTION`
-highlighting. In this grammar, `##!` is item documentation whose text starts
-with `!`.
-
-With Zed's comment continuation enabled, Enter preserves `# `, `#@ `, and `## `
-prefixes in comments. Syntax scopes disable continuation in literal content and
-the initial shebang. Toggle Comments uses `# ` for ordinary code.
-
-Enter increases indentation after an empty structural header or multiline
-assignment. Other lines preserve their indentation; use Shift+Tab to end a
-block. This uses header patterns rather than CST end ranges, because indentation
-defines Toolang's block boundaries. A literal line shaped exactly like a header
-also triggers this indentation heuristic.
-
-Zed 1.22.0 does not apply syntax scopes at EOF, so a shebang or literal hash line
-can still continue a comment there. Zed 1.24.3 includes the
-[editor fix](https://github.com/zed-industries/zed/blob/v1.24.3/crates/language/src/buffer.rs#L4430-L4437);
-restart Zed after updating to apply it.
-
-Only documentation prefixes receive accent colors: program doc prefixes
-(`#@`) use `title`, while item and parameter doc prefixes (`##`) use `text.literal`.
-Documentation prose, `@param`, and parameter names all use `comment.doc` so a
-parameter annotation has one consistent comment color after its prefix. Plain
-comments and shebangs retain `comment`, and code keeps its original styles.
-Prefixes remain distinct even when the theme gives `comment` and `comment.doc`
-the same color.
-
-## Local Use
-
-You do not need to run sync scripts before loading this extension in Zed.
-Zed will use the checked-in files in this repository.
-
-If you want a quick sanity check first:
-
-```bash
-cargo check
-```
-
-Then load this repository directory in Zed's local extension developer flow:
-
-```text
-/path/to/zed-toolang
-```
-
-Open any `.too` file to verify highlighting.
-
-## Maintainer Workflow
-
-Only run sync commands when you are updating the pinned grammar revision.
-
-To move this extension to a released grammar version:
-
-```bash
-make pin-grammar-tag TAG=v0.4.0-alpha.6
-```
-
-This resolves the grammar tag to a fixed commit SHA and fetches that revision
-before updating `extension.toml` and the generated queries. Query ownership is:
-
-| Files under `languages/toolang/` | Maintenance |
-| --- | --- |
-| `highlights.scm`, `overrides.scm`, `config.toml` | Zed-owned rules; edit directly in this repository. |
-| `outline.scm`, `injections.scm` | Generated upstream copies; refresh with `make sync`. Comment-only queries are omitted because Zed requires captures in each loaded query. |
-
-When upgrading the grammar, review its CST and upstream query changes against
-the Zed-owned rules. Documentation colors and editing scopes are explicit
-queries, and indentation lives in the language configuration. Do not add
-structural `indents.scm` ranges: they cause unwanted outdents when a block ends
-at EOF, including while its first body line is being typed.
-
-To refresh generated queries from the currently pinned grammar revision:
-
-```bash
-make sync
-```
-
-`make verify-sync` checks generated queries without modifying them. The sync and
-pin commands read all upstream inputs before changing files and always clean up
-their temporary checkouts.
-
-Before committing maintainer changes, install the grammar test CLI and run the
-checks:
-
-```bash
+```sh
 npm install --global tree-sitter-cli@0.24.7
+make pin-grammar-tag TAG=v0.4.0-alpha.6
 make check
 ```
 
-Checks require Rust, Node.js, Git, and a C compiler. `make test-sync` runs offline
-workflow tests against temporary local Git repositories. The full check fetches
-the pinned grammar once, then verifies query synchronization, query compilation,
-rendered highlighting, outlines, header indentation, and editing scopes for
-documentation, parameters, literal text, collection operations,
-spawn/async/await, repeat conditions, and standalone exec targets with LF, CRLF,
-and EOF variants. These checks exercise parser and query contracts; interactive
-editing behavior also requires testing in Zed; see [the manual checks](tests/README.md).
+Run `pin-grammar-tag` only when upgrading the grammar. Review CST changes against
+these ownership rules:
 
-If you are working on the grammar itself, validate it in the grammar
-repository:
+- Zed owns `highlights.scm`, `overrides.scm`, and `config.toml` under `languages/toolang/`.
+- `make sync` copies upstream outline and injection queries; comment-only queries
+  are omitted. `make verify-sync` checks them without modifying files.
+- Indentation uses header patterns in `config.toml`. Structural `indents.scm`
+  ranges cause unwanted outdents at EOF.
 
-```bash
-git clone https://github.com/openhat-ai/tree-sitter-toolang.git
-cd tree-sitter-toolang
-npm install
-npm run check
-```
+Also run the [manual Zed checks](tests/README.md), which document editing behavior
+and known editor limitations.
 
-## Publishing To Zed
+## Versions and releases
 
-For a Zed extension release:
+Use the pinned grammar's complete version for the extension and Git tag,
+including prerelease suffixes. Grammar `v0.4.0-alpha.6` means extension
+`0.4.0-alpha.6` and tag `v0.4.0-alpha.6`.
 
-1. Bump the version in both `extension.toml` and `Cargo.toml`.
-2. Push the release-ready commit to `openhat-ai/zed-toolang`.
-3. Fork `https://github.com/zed-industries/extensions`.
-4. Add this repository as a Git submodule under `extensions/toolang` using the
-   HTTPS repository URL.
-5. Add a matching entry to the top-level `extensions.toml`.
-6. Run `pnpm sort-extensions`.
-7. Open a pull request to `zed-industries/extensions`.
+Keep `extension.toml`, `Cargo.toml`, and `Cargo.lock` versions consistent. Record
+the exact grammar tag and commit in `extension.toml` and release notes.
 
-After the PR is merged, Zed packages and publishes the extension to the
-extension registry.
+After verification, merge the release commit, tag it, and publish release notes.
+To publish to the Zed registry, submit a PR to
+[zed-industries/extensions](https://github.com/zed-industries/extensions) with the
+extension's commit and matching version. See Zed's
+[publishing](https://zed.dev/docs/extensions/publishing/publishing-guide) and
+[update](https://zed.dev/docs/extensions/publishing/updating-and-maintenance)
+guides.

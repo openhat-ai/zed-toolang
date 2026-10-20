@@ -20,16 +20,36 @@ flow research(_):
   handoffs = none
   recall = default
   lanes = default
+  let child = async run merge
+  async run: Record the launch.
+  let worker = spawn merge
+  spawn -> Text:
+    Research {{_}}.
+  let result = await child
+  await worker
+  let note =
+    async run, spawn, and await remain literal here.
   repeat 5 times windowing 2:
-    scatter using: Split {{_}} into items.
-    settle using merge:
+    until ready
+    generate 3 in 2 lanes using merge
+    map -> Text[]: Expand {{_}}.
+    reduce using merge:
       from: Initial summary.
-    until: Compare {{_}} with {{_2._}}.
+    run: Continue the research.
   repeat windowing 3:
-    scatter:
-      Split {{_}} again.
-    settle:
+    generate 2 -> Text[]:
+      List related topics.
+    reduce:
       Merge {{_}} with {{_1._}}.
       from:
         Initial content.
     until: The summary is complete.
+    keep first 3
+    drop last 2
+  repeat:
+    run merge
+    until:
+      until remains literal in condition text.
+  keep in 2 lanes if -> Boolean: Is {{_}} useful?
+  drop if duplicate
+  sort ascending in 2 lanes by -> Number: Score {{_}}.

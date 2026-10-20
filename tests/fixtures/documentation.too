@@ -1,6 +1,6 @@
 #!/usr/bin/env too
 #@ Module docs.
-##! Legacy module docs.
+##! Item docs with an exclamation mark.
 #@
 ##!
 ##
@@ -10,7 +10,7 @@
 ## @param _ Source material.
 ## @param style Preferred summary style.
 agic summarize(_: Text, style?: Text): # Inline comment.
-  ##! Indented legacy docs.
+  ##! Indented item docs.
   user:
     #@ Literal module marker.
     ## @param _ Literal parameter tag.

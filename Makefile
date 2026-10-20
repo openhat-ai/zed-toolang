@@ -1,4 +1,4 @@
-.PHONY: sync pin-grammar-tag verify-sync test-highlights check
+.PHONY: sync pin-grammar-tag verify-sync test-sync test-highlights check
 
 sync:
 	./scripts/sync-tree-sitter-queries.sh
@@ -13,7 +13,10 @@ verify-sync:
 test-highlights:
 	node scripts/check-highlights.mjs
 
+test-sync:
+	node --test tests/sync-queries.test.mjs
+
 check:
 	cargo check
-	$(MAKE) verify-sync
-	$(MAKE) test-highlights
+	$(MAKE) test-sync
+	node scripts/grammar.mjs check

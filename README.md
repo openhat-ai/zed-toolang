@@ -22,18 +22,29 @@ The Tree-sitter grammar source of truth lives in:
 That grammar repository is also where npm, PyPI, and Cargo grammar packages are
 published.
 
-This extension pins the Toolang v0.3.4 grammar revision, supporting standalone
-`exec` statements with named and inline targets, unified runnable directives,
-`repeat ... windowing`, and `settle` blocks with `from` initializers.
-It includes `#@` module documentation and
-`## @param NAME DESCRIPTION` highlighting while retaining `##!` compatibility.
+This extension pins tree-sitter-toolang v0.4.0-alpha.5, including its unified CST,
+`generate`/`reduce` collection syntax, `spawn`, `async run`/`await`, and flexible
+`repeat` conditions. It includes `#@` program documentation, `##` item
+documentation, and `## @param NAME DESCRIPTION` highlighting. In this grammar,
+`##!` is item documentation whose text starts with `!`.
 
-With Zed's comment continuation enabled, Enter preserves `# `, `#@ `, `## `,
-and legacy `##! ` prefixes. A shebang never adds a comment prefix on the next
-line. Toggle Comments still uses `# ` for ordinary code.
+With Zed's comment continuation enabled, Enter preserves `# `, `#@ `, and `## `
+prefixes in comments. Syntax scopes disable continuation in literal content and
+the initial shebang. Toggle Comments uses `# ` for ordinary code.
 
-Only documentation prefixes receive new accent colors: module doc prefixes
-(`#@` and `##!`) use `title`, while item doc prefixes (`##`) use `text.literal`.
+Enter increases indentation after an empty structural header or multiline
+assignment. Other lines preserve their indentation; use Shift+Tab to end a
+block. This uses header patterns rather than CST end ranges, because indentation
+defines Toolang's block boundaries. A literal line shaped exactly like a header
+also triggers this indentation heuristic.
+
+Zed 1.22.0 does not apply syntax scopes at EOF, so a shebang or literal hash line
+can still continue a comment there. Zed 1.24.3 includes the
+[editor fix](https://github.com/zed-industries/zed/blob/v1.24.3/crates/language/src/buffer.rs#L4430-L4437);
+restart Zed after updating to apply it.
+
+Only documentation prefixes receive accent colors: program doc prefixes
+(`#@`) use `title`, while item and parameter doc prefixes (`##`) use `text.literal`.
 Documentation prose, `@param`, and parameter names all use `comment.doc` so a
 parameter annotation has one consistent comment color after its prefix. Plain
 comments and shebangs retain `comment`, and code keeps its original styles.
@@ -66,23 +77,32 @@ Only run sync commands when you are updating the pinned grammar revision.
 To move this extension to a released grammar version:
 
 ```bash
-make pin-grammar-tag TAG=v0.3.4
+make pin-grammar-tag TAG=v0.4.0-alpha.5
 ```
 
-This resolves the grammar tag to a fixed commit SHA, updates
-`extension.toml`, and refreshes the checked-in query files.
-The sync script adapts upstream documentation and parameter annotation captures
-to Zed's `comment.doc` style, with title and text accents limited to prefixes. Keep
-editor-specific capture adaptation in the sync script; do not edit the synced
-copies directly.
-`languages/toolang/overrides.scm` is maintained locally for Zed-specific editing
-behavior, including the shebang continuation exception.
+This resolves the grammar tag to a fixed commit SHA and fetches that revision
+before updating `extension.toml` and the generated queries. Query ownership is:
 
-To re-sync the currently pinned grammar revision:
+| Files under `languages/toolang/` | Maintenance |
+| --- | --- |
+| `highlights.scm`, `overrides.scm`, `config.toml` | Zed-owned rules; edit directly in this repository. |
+| `outline.scm`, `injections.scm` | Generated upstream copies; refresh with `make sync`. Comment-only queries are omitted because Zed requires captures in each loaded query. |
+
+When upgrading the grammar, review its CST and upstream query changes against
+the Zed-owned rules. Documentation colors and editing scopes are explicit
+queries, and indentation lives in the language configuration. Do not add
+structural `indents.scm` ranges: they cause unwanted outdents when a block ends
+at EOF, including while its first body line is being typed.
+
+To refresh generated queries from the currently pinned grammar revision:
 
 ```bash
 make sync
 ```
+
+`make verify-sync` checks generated queries without modifying them. The sync and
+pin commands read all upstream inputs before changing files and always clean up
+their temporary checkouts.
 
 Before committing maintainer changes, install the grammar test CLI and run the
 checks:
@@ -92,10 +112,14 @@ npm install --global tree-sitter-cli@0.24.7
 make check
 ```
 
-Checks require Rust, Node.js, Git, and a C compiler. They fetch the pinned grammar,
-then verify query synchronization, rendered highlighting, outlines, and
-indentation for documentation, parameters, literal text, settle blocks, and
-standalone exec targets with LF, CRLF, and EOF variants.
+Checks require Rust, Node.js, Git, and a C compiler. `make test-sync` runs offline
+workflow tests against temporary local Git repositories. The full check fetches
+the pinned grammar once, then verifies query synchronization, query compilation,
+rendered highlighting, outlines, header indentation, and editing scopes for
+documentation, parameters, literal text, collection operations,
+spawn/async/await, repeat conditions, and standalone exec targets with LF, CRLF,
+and EOF variants. These checks exercise parser and query contracts; interactive
+editing behavior also requires testing in Zed; see [the manual checks](tests/README.md).
 
 If you are working on the grammar itself, validate it in the grammar
 repository:

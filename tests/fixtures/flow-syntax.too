@@ -34,14 +34,14 @@ flow research(_):
     generate 3 in 2 lanes using merge
     map -> Text[]: Expand {{_}}.
     reduce using merge:
-      from: Initial summary.
+      initial: Initial summary.
     run: Continue the research.
   repeat windowing 3:
     generate 2 -> Text[]:
       List related topics.
     reduce:
       Merge {{_}} with {{_1._}}.
-      from:
+      initial:
         Initial content.
     until: The summary is complete.
     keep first 3

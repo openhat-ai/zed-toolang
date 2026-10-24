@@ -15,7 +15,7 @@ Checks require Rust, Node.js, Git, a C compiler, and Tree-sitter CLI 0.24.7:
 
 ```sh
 npm install --global tree-sitter-cli@0.24.7
-make pin-grammar-tag TAG=v0.4.0-alpha.6
+make pin-grammar-tag TAG=v0.4.0
 make check
 ```
 
@@ -34,8 +34,8 @@ and known editor limitations.
 ## Versions and releases
 
 Use the pinned grammar's complete version for the extension and Git tag,
-including prerelease suffixes. Grammar `v0.4.0-alpha.6` means extension
-`0.4.0-alpha.6` and tag `v0.4.0-alpha.6`.
+including prerelease suffixes. Grammar `v0.4.0` means extension
+`0.4.0` and tag `v0.4.0`.
 
 Keep `extension.toml`, `Cargo.toml`, and `Cargo.lock` versions consistent. Record
 the exact grammar tag and commit in `extension.toml` and release notes.
